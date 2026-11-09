@@ -1,0 +1,429 @@
+/* ==========================================================================
+   SmartCity Connect - Modern Civic Portal Theme
+   ========================================================================== */
+
+:root {
+  --city-primary: #1e3a8a;       /* Deep Municipal Navy */
+  --city-primary-hover: #172554;
+  --city-accent: #2563eb;        /* Smart Blue */
+  --city-light: #f8fafc;
+  --city-surface: #ffffff;
+  
+  /* Category Theming */
+  --cat-waste: #059669;          /* Waste Emerald */
+  --cat-waste-light: #ecfdf5;
+  --cat-waste-border: #a7f3d0;
+  
+  --cat-hospital: #dc2626;       /* Medical Crimson */
+  --cat-hospital-light: #fef2f2;
+  --cat-hospital-border: #fecaca;
+  
+  --cat-road: #d97706;           /* Infrastructure Amber */
+  --cat-road-light: #fffbeb;
+  --cat-road-border: #fde68a;
+
+  --text-main: #1e293b;
+  --text-muted: #64748b;
+  --border-color: #e2e8f0;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.08);
+  --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -2px rgba(0,0,0,0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -4px rgba(0,0,0,0.05);
+  --radius-lg: 14px;
+}
+
+body {
+  font-family: 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+  color: var(--text-main);
+  background-color: #f1f5f9;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Navbar */
+.navbar-custom {
+  background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
+  box-shadow: 0 2px 10px rgba(30, 58, 138, 0.25);
+  padding: 0.8rem 1rem;
+}
+
+.navbar-brand {
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  font-size: 1.35rem;
+}
+
+.nav-link {
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.9) !important;
+  transition: all 0.2s ease;
+  padding: 0.5rem 0.85rem !important;
+  border-radius: 8px;
+}
+
+.nav-link:hover, .nav-link.active {
+  color: #ffffff !important;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.btn-lang-toggle {
+  background: rgba(255, 255, 255, 0.18);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  font-weight: 600;
+  padding: 0.35rem 0.8rem;
+  border-radius: 20px;
+  transition: all 0.2s ease;
+}
+
+.btn-lang-toggle:hover {
+  background: #fff;
+  color: var(--city-primary);
+}
+
+/* Hero Section */
+.hero-section {
+  background: linear-gradient(135deg, #1e3a8a 0%, #0f172a 100%);
+  color: white;
+  padding: 3.5rem 0;
+  position: relative;
+  overflow: hidden;
+}
+
+.hero-section::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: radial-gradient(circle at 85% 20%, rgba(37, 99, 235, 0.25) 0%, transparent 50%);
+  pointer-events: none;
+}
+
+.hero-search-box {
+  background: #ffffff;
+  border-radius: 50px;
+  padding: 6px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.25);
+  max-width: 680px;
+  margin: 1.5rem auto 0;
+}
+
+.hero-search-box input {
+  border: none;
+  box-shadow: none !important;
+  padding-left: 1.2rem;
+  font-size: 1rem;
+}
+
+.hero-search-box .btn {
+  border-radius: 40px;
+  padding: 0.6rem 1.6rem;
+  font-weight: 600;
+}
+
+/* Three Main Service Cards */
+.service-card {
+  border: none;
+  border-radius: var(--radius-lg);
+  background: #ffffff;
+  box-shadow: var(--shadow-sm);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  overflow: hidden;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.service-card:hover {
+  transform: translateY(-6px);
+  box-shadow: var(--shadow-lg);
+}
+
+/* Specific Service Card Highlights */
+.service-card.card-waste {
+  border-top: 5px solid var(--cat-waste);
+}
+.service-card.card-waste .card-icon-wrapper {
+  background: var(--cat-waste-light);
+  color: var(--cat-waste);
+}
+
+.service-card.card-hospital {
+  border-top: 5px solid var(--cat-hospital);
+}
+.service-card.card-hospital .card-icon-wrapper {
+  background: var(--cat-hospital-light);
+  color: var(--cat-hospital);
+}
+
+.service-card.card-road {
+  border-top: 5px solid var(--cat-road);
+}
+.service-card.card-road .card-icon-wrapper {
+  background: var(--cat-road-light);
+  color: var(--cat-road);
+}
+
+.card-icon-wrapper {
+  width: 64px;
+  height: 64px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  margin-bottom: 1.25rem;
+}
+
+.service-features-list {
+  list-style: none;
+  padding: 0;
+  margin: 1rem 0 1.5rem;
+}
+
+.service-features-list li {
+  padding: 0.35rem 0;
+  color: var(--text-muted);
+  font-size: 0.92rem;
+  display: flex;
+  align-items: center;
+}
+
+.service-features-list li i {
+  margin-right: 0.5rem;
+  font-size: 0.85rem;
+}
+
+/* Category Badges */
+.badge-waste {
+  background-color: var(--cat-waste-light);
+  color: var(--cat-waste);
+  border: 1px solid var(--cat-waste-border);
+  font-weight: 600;
+}
+
+.badge-hospital {
+  background-color: var(--cat-hospital-light);
+  color: var(--cat-hospital);
+  border: 1px solid var(--cat-hospital-border);
+  font-weight: 600;
+}
+
+.badge-road {
+  background-color: var(--cat-road-light);
+  color: var(--cat-road);
+  border: 1px solid var(--cat-road-border);
+  font-weight: 600;
+}
+
+/* Status Badges */
+.status-badge {
+  padding: 0.4rem 0.85rem;
+  border-radius: 20px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.status-submitted {
+  background-color: #f1f5f9;
+  color: #475569;
+  border: 1px solid #cbd5e1;
+}
+
+.status-under-review {
+  background-color: #fef3c7;
+  color: #92400e;
+  border: 1px solid #fde68a;
+}
+
+.status-assigned {
+  background-color: #e0e7ff;
+  color: #3730a3;
+  border: 1px solid #c7d2fe;
+}
+
+.status-in-progress {
+  background-color: #ede9fe;
+  color: #5b21b6;
+  border: 1px solid #ddd6fe;
+}
+
+.status-resolved {
+  background-color: #dcfce7;
+  color: #166534;
+  border: 1px solid #bbf7d0;
+}
+
+.status-rejected {
+  background-color: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #fecaca;
+}
+
+/* Complaint Tracking Progress Stepper */
+.progress-stepper {
+  display: flex;
+  justify-content: space-between;
+  position: relative;
+  margin: 2.5rem 0 2rem;
+}
+
+.progress-stepper::before {
+  content: '';
+  position: absolute;
+  top: 22px;
+  left: 30px;
+  right: 30px;
+  height: 4px;
+  background: #e2e8f0;
+  z-index: 1;
+}
+
+.step-item {
+  position: relative;
+  z-index: 2;
+  text-align: center;
+  flex: 1;
+}
+
+.step-circle {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 3px solid #cbd5e1;
+  color: #64748b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 0.6rem;
+  font-weight: 700;
+  transition: all 0.3s ease;
+}
+
+.step-item.active .step-circle {
+  border-color: var(--city-accent);
+  background: var(--city-accent);
+  color: #ffffff;
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.2);
+}
+
+.step-item.completed .step-circle {
+  border-color: #10b981;
+  background: #10b981;
+  color: #ffffff;
+}
+
+.step-title {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.step-item.active .step-title {
+  color: var(--city-accent);
+}
+
+.step-item.completed .step-title {
+  color: #10b981;
+}
+
+/* AI Recommendation Alert */
+.ai-recommendation-box {
+  background: linear-gradient(135deg, #f0fdf4 0%, #e0f2fe 100%);
+  border: 1px solid #bae6fd;
+  border-radius: 12px;
+  padding: 1rem 1.25rem;
+  margin-bottom: 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.pulse-badge {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background-color: #10b981;
+  box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+  animation: pulse-green 1.6s infinite;
+}
+
+@keyframes pulse-green {
+  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+  70% { transform: scale(1); box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
+  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+}
+
+/* Map Containers */
+#map, .leaflet-map-container {
+  height: 520px;
+  width: 100%;
+  border-radius: 12px;
+  box-shadow: var(--shadow-md);
+  border: 1px solid var(--border-color);
+}
+
+#picker-map {
+  height: 280px;
+  width: 100%;
+  border-radius: 8px;
+  margin-top: 0.5rem;
+}
+
+/* Emergency Banner */
+.emergency-strip {
+  background: linear-gradient(90deg, #991b1b 0%, #dc2626 100%);
+  color: white;
+  padding: 0.75rem 1rem;
+  font-weight: 600;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* Stats Counter Box */
+.stat-card {
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-sm);
+  text-align: center;
+}
+
+.stat-number {
+  font-size: 2.2rem;
+  font-weight: 800;
+  line-height: 1;
+  margin-bottom: 0.4rem;
+}
+
+/* Footer */
+footer {
+  margin-top: auto;
+  background-color: #0f172a;
+  color: #94a3b8;
+  padding: 3rem 0 1.5rem;
+}
+
+footer a {
+  color: #cbd5e1;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+footer a:hover {
+  color: #ffffff;
+}
+
+.footer-bottom {
+  border-top: 1px solid #1e293b;
+  margin-top: 2rem;
+  padding-top: 1.25rem;
+  font-size: 0.88rem;
+}

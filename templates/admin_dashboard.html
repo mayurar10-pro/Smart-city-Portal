@@ -1,0 +1,418 @@
+{% extends "base.html" %}
+
+{% block title %}Administrator Dashboard & Analytics – SmartCity Connect{% endblock %}
+
+{% block content %}
+<div class="py-4 text-white" style="background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%);">
+  <div class="container d-flex justify-content-between align-items-center flex-wrap gap-3">
+    <div>
+      <div class="badge bg-warning text-dark fw-bold mb-2"><i class="fa-solid fa-shield-halved me-1"></i> Admin Portal Active</div>
+      <h1 class="h3 fw-bold mb-1">Municipal Governance & Analytics Dashboard</h1>
+      <p class="mb-0 text-white-50">Welcome, {{ session.get('admin_name', 'Municipal Administrator') }} (BBMP Smart Governance)</p>
+    </div>
+    <div class="d-flex gap-2">
+      <a href="{{ url_for('manage_complaints') }}" class="btn btn-warning fw-bold">
+        <i class="fa-solid fa-list-check me-1"></i> Manage All Complaints
+      </a>
+      <button class="btn btn-outline-light" data-bs-toggle="modal" data-bs-target="#addFacilityModal">
+        <i class="fa-solid fa-plus me-1"></i> Add Facility
+      </button>
+      <button class="btn btn-outline-light" data-bs-toggle="modal" data-bs-target="#addAnnouncementModal">
+        <i class="fa-solid fa-bullhorn me-1"></i> Post Announcement
+      </button>
+    </div>
+  </div>
+</div>
+
+<div class="container py-4">
+  <!-- Analytics Counters -->
+  <div class="row g-3 mb-4 text-center">
+    <div class="col-lg-3 col-sm-6">
+      <div class="card border-0 shadow-sm p-3 h-100 border-start border-4 border-primary">
+        <div class="fs-2 fw-bold text-primary">{{ analytics.total }}</div>
+        <div class="small text-muted text-uppercase fw-semibold">Total Complaints</div>
+      </div>
+    </div>
+    <div class="col-lg-3 col-sm-6">
+      <div class="card border-0 shadow-sm p-3 h-100 border-start border-4 border-success">
+        <div class="fs-2 fw-bold text-success">{{ analytics.resolved }}</div>
+        <div class="small text-muted text-uppercase fw-semibold">Resolved Issues</div>
+      </div>
+    </div>
+    <div class="col-lg-3 col-sm-6">
+      <div class="card border-0 shadow-sm p-3 h-100 border-start border-4 border-warning">
+        <div class="fs-2 fw-bold text-warning">{{ analytics.pending }}</div>
+        <div class="small text-muted text-uppercase fw-semibold">Pending / In Progress</div>
+      </div>
+    </div>
+    <div class="col-lg-3 col-sm-6">
+      <div class="card border-0 shadow-sm p-3 h-100 border-start border-4 border-info">
+        <div class="fs-2 fw-bold text-info">{{ analytics.facilities_count }}</div>
+        <div class="small text-muted text-uppercase fw-semibold">Active Service Facilities</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Chart.js Analytics Section -->
+  <div class="row g-4 mb-4">
+    <div class="col-lg-6">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center">
+          <h6 class="fw-bold mb-0"><i class="fa-solid fa-chart-pie text-primary me-2"></i> Complaints by Service Category</h6>
+          <span class="badge bg-light text-dark border">3 Core Categories</span>
+        </div>
+        <div class="card-body p-4 d-flex justify-content-center">
+          <div style="max-width: 380px; width: 100%;">
+            <canvas id="categoryChart"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-6">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center">
+          <h6 class="fw-bold mb-0"><i class="fa-solid fa-chart-column text-success me-2"></i> Complaints Status Pipeline</h6>
+          <span class="badge bg-light text-dark border">Real-time Redressal</span>
+        </div>
+        <div class="card-body p-4">
+          <canvas id="statusChart" height="220"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Recent Complaints Table with Fast Action -->
+  <div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
+      <h6 class="fw-bold mb-0"><i class="fa-solid fa-clock-rotate-left text-primary me-2"></i> Recent Grievance Submissions</h6>
+      <a href="{{ url_for('manage_complaints') }}" class="btn btn-sm btn-outline-primary">
+        Open Full Complaint Management Portal <i class="fa-solid fa-arrow-right ms-1"></i>
+      </a>
+    </div>
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>ID</th>
+            <th>Category & AI Prediction</th>
+            <th>Title & Location</th>
+            <th>Citizen</th>
+            <th>Current Status</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for cmp in recent_complaints %}
+          <tr>
+            <td>
+              <span class="badge bg-light text-dark border font-monospace">{{ cmp.tracking_id }}</span>
+            </td>
+            <td>
+              <span class="badge {% if cmp.category == 'Waste Management' %}badge-waste{% elif cmp.category == 'Hospital Services' %}badge-hospital{% else %}badge-road{% endif %} d-block mb-1">
+                {{ cmp.category }}
+              </span>
+              {% if cmp.predicted_category %}
+              <small class="text-muted font-monospace" style="font-size: 0.72rem;">
+                <i class="fa-solid fa-robot text-primary"></i> AI: {{ cmp.predicted_category }}
+              </small>
+              {% endif %}
+            </td>
+            <td>
+              <div class="fw-semibold text-truncate" style="max-width: 250px;">{{ cmp.title }}</div>
+              <small class="text-muted"><i class="fa-solid fa-location-dot me-1"></i> {{ cmp.location_name }}</small>
+            </td>
+            <td>
+              <small class="d-block fw-semibold">{{ cmp.citizen_name or 'Anonymous' }}</small>
+              <small class="text-muted">{{ cmp.citizen_contact or 'No Contact' }}</small>
+            </td>
+            <td>
+              <span class="status-badge {% if cmp.status == 'Submitted' %}status-submitted{% elif cmp.status == 'Under Review' %}status-under-review{% elif cmp.status == 'Assigned' %}status-assigned{% elif cmp.status == 'In Progress' %}status-in-progress{% elif cmp.status == 'Resolved' %}status-resolved{% else %}status-rejected{% endif %}">
+                {{ cmp.status }}
+              </span>
+            </td>
+            <td>
+              <a href="{{ url_for('manage_complaints') }}?search={{ cmp.tracking_id }}" class="btn btn-sm btn-outline-secondary">
+                <i class="fa-solid fa-pen-to-square me-1"></i> Review
+              </a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Facilities Management Section -->
+  <div class="card border-0 shadow-sm mb-4" id="facilities-section">
+    <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
+      <h6 class="fw-bold mb-0"><i class="fa-solid fa-building-circle-check text-info me-2"></i> Service Information Management (Facilities & Corridors)</h6>
+      <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addFacilityModal">
+        <i class="fa-solid fa-plus me-1"></i> Add New Facility
+      </button>
+    </div>
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>Category</th>
+            <th>Facility / Corridor Name</th>
+            <th>Address</th>
+            <th>Operating Timings</th>
+            <th>Contact / Helpline</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for fac in facilities %}
+          <tr>
+            <td>
+              <span class="badge {% if fac.category == 'Waste Management' %}badge-waste{% elif fac.category == 'Hospital Services' %}badge-hospital{% else %}badge-road{% endif %}">
+                {{ fac.category }}
+              </span>
+            </td>
+            <td class="fw-semibold">{{ fac.name }}</td>
+            <td class="small text-muted">{{ fac.address }}</td>
+            <td class="small">{{ fac.operating_hours }}</td>
+            <td class="small font-monospace">{{ fac.contact_number }}</td>
+            <td>
+              <form action="{{ url_for('delete_facility', facility_id=fac.id) }}" method="POST" onsubmit="return confirm('Remove this facility?');" class="d-inline">
+                <button type="submit" class="btn btn-sm btn-outline-danger">
+                  <i class="fa-solid fa-trash"></i>
+                </button>
+              </form>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Announcements Management Section -->
+  <div class="card border-0 shadow-sm mb-4" id="announcements-section">
+    <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
+      <h6 class="fw-bold mb-0"><i class="fa-solid fa-bullhorn text-warning me-2"></i> Published Civic Announcements</h6>
+      <button class="btn btn-sm btn-warning fw-bold text-dark" data-bs-toggle="modal" data-bs-target="#addAnnouncementModal">
+        <i class="fa-solid fa-plus me-1"></i> Publish Announcement
+      </button>
+    </div>
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>Priority</th>
+            <th>Category</th>
+            <th>Title</th>
+            <th>Content</th>
+            <th>Published Date</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for ann in announcements %}
+          <tr>
+            <td>
+              <span class="badge {% if ann.priority == 'Emergency' %}bg-danger{% elif ann.priority == 'Important' %}bg-warning text-dark{% else %}bg-secondary{% endif %}">
+                {{ ann.priority }}
+              </span>
+            </td>
+            <td><span class="badge bg-light text-dark border">{{ ann.category }}</span></td>
+            <td class="fw-semibold">{{ ann.title }}</td>
+            <td class="small text-muted text-truncate" style="max-width: 300px;">{{ ann.content }}</td>
+            <td class="small">{{ ann.created_at[:10] }}</td>
+            <td>
+              <form action="{{ url_for('delete_announcement', announcement_id=ann.id) }}" method="POST" onsubmit="return confirm('Delete this announcement?');" class="d-inline">
+                <button type="submit" class="btn btn-sm btn-outline-danger">
+                  <i class="fa-solid fa-trash"></i>
+                </button>
+              </form>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Modal 1: Add Facility -->
+<div class="modal fade" id="addFacilityModal" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <form action="{{ url_for('add_facility') }}" method="POST">
+        <div class="modal-header bg-primary text-white">
+          <h5 class="modal-title fw-bold"><i class="fa-solid fa-plus me-2"></i> Add Service Facility / Route</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body p-4">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label fw-bold">Service Category *</label>
+              <select name="category" class="form-select" required>
+                <option value="Waste Management">🗑️ Waste Management</option>
+                <option value="Hospital Services">🏥 Hospital Services</option>
+                <option value="Road Management">🛣️ Road Management</option>
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-bold">Facility / Corridor Name *</label>
+              <input type="text" name="name" class="form-control" placeholder="e.g. Victoria Hospital / Koramangala Waste Center" required>
+            </div>
+            <div class="col-12">
+              <label class="form-label fw-bold">Address / Location *</label>
+              <input type="text" name="address" class="form-control" placeholder="Full civic address or road stretch" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-bold">Helpline / Contact Number</label>
+              <input type="text" name="contact_number" class="form-control" placeholder="e.g. 080-26701150">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-bold">Emergency Contact Desk</label>
+              <input type="text" name="emergency_contact" class="form-control" placeholder="e.g. 108 / 080-26701155">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-bold">Operating Hours</label>
+              <input type="text" name="operating_hours" class="form-control" placeholder="e.g. 24/7 or Daily 6:00 AM - 2:00 PM">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-bold">Status</label>
+              <input type="text" name="status" class="form-control" value="Operational" placeholder="e.g. Operational / Good / Under Maintenance">
+            </div>
+            <div class="col-12">
+              <label class="form-label fw-bold">Details / Services Offered</label>
+              <textarea name="details" rows="2" class="form-control" placeholder="e.g. ICU beds, trauma desk, wet composting, asphalt patching..."></textarea>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-bold">Latitude</label>
+              <input type="number" step="0.000001" name="latitude" class="form-control" value="12.9716">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-bold">Longitude</label>
+              <input type="number" step="0.000001" name="longitude" class="form-control" value="77.5946">
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-primary fw-bold">Save Facility</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Modal 2: Add Announcement -->
+<div class="modal fade" id="addAnnouncementModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form action="{{ url_for('add_announcement') }}" method="POST">
+        <div class="modal-header bg-warning text-dark">
+          <h5 class="modal-title fw-bold"><i class="fa-solid fa-bullhorn me-2"></i> Publish Civic Announcement</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body p-4">
+          <div class="mb-3">
+            <label class="form-label fw-bold">Announcement Title *</label>
+            <input type="text" name="title" class="form-control" placeholder="e.g. Night Road Resurfacing on MG Road" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-bold">Category *</label>
+            <select name="category" class="form-select" required>
+              <option value="General">General Civic Update</option>
+              <option value="Waste Management">🗑️ Waste Management</option>
+              <option value="Hospital Services">🏥 Hospital Services</option>
+              <option value="Road Management">🛣️ Road Management</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-bold">Priority Level</label>
+            <select name="priority" class="form-select">
+              <option value="Normal">Normal Advisory</option>
+              <option value="Important">Important Notification</option>
+              <option value="Emergency">Urgent Emergency Alert</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-bold">Announcement Content *</label>
+            <textarea name="content" rows="4" class="form-control" placeholder="Write the announcement body..." required></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-warning fw-bold text-dark">Publish Announcement</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Chart 1: Categories Doughnut Chart
+  const catCtx = document.getElementById('categoryChart').getContext('2d');
+  new Chart(catCtx, {
+    type: 'doughnut',
+    data: {
+      labels: ['Waste Management', 'Hospital Services', 'Road Management'],
+      datasets: [{
+        data: [
+          {{ analytics.by_category.get('Waste Management', 0) }},
+          {{ analytics.by_category.get('Hospital Services', 0) }},
+          {{ analytics.by_category.get('Road Management', 0) }}
+        ],
+        backgroundColor: ['#059669', '#dc2626', '#d97706'],
+        borderWidth: 2,
+        borderColor: '#ffffff'
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { position: 'bottom' }
+      }
+    }
+  });
+
+  // Chart 2: Status Bar Chart
+  const statCtx = document.getElementById('statusChart').getContext('2d');
+  new Chart(statCtx, {
+    type: 'bar',
+    data: {
+      labels: ['Submitted', 'Under Review', 'Assigned', 'In Progress', 'Resolved', 'Rejected'],
+      datasets: [{
+        label: 'Number of Complaints',
+        data: [
+          {{ analytics.by_status.get('Submitted', 0) }},
+          {{ analytics.by_status.get('Under Review', 0) }},
+          {{ analytics.by_status.get('Assigned', 0) }},
+          {{ analytics.by_status.get('In Progress', 0) }},
+          {{ analytics.by_status.get('Resolved', 0) }},
+          {{ analytics.by_status.get('Rejected', 0) }}
+        ],
+        backgroundColor: [
+          '#64748b',
+          '#f59e0b',
+          '#6366f1',
+          '#8b5cf6',
+          '#10b981',
+          '#ef4444'
+        ],
+        borderRadius: 6
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { display: false }
+      },
+      scales: {
+        y: { beginAtZero: true, ticks: { stepSize: 1 } }
+      }
+    }
+  });
+});
+</script>
+{% endblock %}

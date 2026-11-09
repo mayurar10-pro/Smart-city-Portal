@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Authentication – SmartCity Connect{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-md-6 col-lg-5">
+      <div class="card border-0 shadow-lg rounded-4 overflow-hidden">
+        <div class="p-4 text-center text-white" style="background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%);">
+          <span class="fs-1 d-block mb-2">🛡️</span>
+          <h4 class="fw-bold mb-1" data-i18n="admin_login">Municipal Administrative Portal</h4>
+          <p class="small text-white-50 mb-0">Authorized Civic Personnel & Ward Engineers</p>
+        </div>
+
+        <div class="card-body p-4 p-md-5 bg-white">
+          <form action="{{ url_for('admin_login') }}" method="POST">
+            <div class="mb-3">
+              <label class="form-label fw-semibold">Username</label>
+              <div class="input-group">
+                <span class="input-group-text bg-light border-end-0"><i class="fa-solid fa-user text-muted"></i></span>
+                <input type="text" name="username" class="form-control border-start-0" value="admin" required placeholder="Enter admin username">
+              </div>
+            </div>
+
+            <div class="mb-4">
+              <label class="form-label fw-semibold">Password</label>
+              <div class="input-group">
+                <span class="input-group-text bg-light border-end-0"><i class="fa-solid fa-lock text-muted"></i></span>
+                <input type="password" name="password" class="form-control border-start-0" value="admin123" required placeholder="Enter password">
+              </div>
+            </div>
+
+            <div class="d-grid gap-2">
+              <button type="submit" class="btn btn-primary btn-lg fw-bold shadow-sm">
+                <i class="fa-solid fa-right-to-bracket me-2"></i> Sign In to Dashboard
+              </button>
+            </div>
+          </form>
+
+          <!-- Demo Credentials Helper Alert -->
+          <div class="alert alert-info border-0 shadow-sm mt-4 mb-0 small">
+            <i class="fa-solid fa-key me-1"></i> <strong>Default Credentials for Evaluation:</strong><br>
+            Username: <code class="fw-bold">admin</code> | Password: <code class="fw-bold">admin123</code>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,187 @@
+{% extends "base.html" %}
+
+{% block title %}Report Civic Issue – SmartCity Connect{% endblock %}
+
+{% block content %}
+<div class="bg-primary text-white py-4">
+  <div class="container">
+    <div class="d-flex align-items-center mb-1">
+      <span class="fs-2 me-2">📝</span>
+      <h1 class="h3 fw-bold mb-0" data-i18n="complaint_form_title">Civic Issue Reporting System</h1>
+    </div>
+    <p class="text-white-50 mb-0">Report problems across Waste Management, Hospital Services, or Road Management for municipal investigation and resolution.</p>
+  </div>
+</div>
+
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+      <div class="card border-0 shadow-sm rounded-4">
+        <div class="card-body p-4 p-md-5">
+
+          <!-- AI Categorization Suggestion Box (Hidden by default, shown dynamically via JS) -->
+          <div id="ai-recommendation-box" class="ai-recommendation-box" style="display: none; cursor: pointer;">
+            <div class="d-flex align-items-center">
+              <span class="pulse-badge me-2"></span>
+              <div>
+                <span class="small text-muted fw-bold text-uppercase d-block" data-i18n="ai_suggested">AI Suggested Category:</span>
+                <span id="ai-category-badge" class="fs-6"></span>
+              </div>
+            </div>
+            <div>
+              <span class="btn btn-sm btn-primary fw-semibold rounded-pill" data-i18n="click_to_apply">
+                <i class="fa-solid fa-check me-1"></i> Apply Suggestion
+              </span>
+            </div>
+          </div>
+
+          <form action="{{ url_for('report_issue') }}" method="POST" enctype="multipart/form-data">
+            
+            <!-- Category Selection -->
+            <div class="mb-4">
+              <label class="form-label fw-bold text-dark" data-i18n="form_category">
+                <i class="fa-solid fa-layer-group text-primary me-1"></i> Select Service Category <span class="text-danger">*</span>
+              </label>
+              <select name="category" id="complaint-category" class="form-select form-select-lg" required>
+                <option value="Waste Management" {% if prefill_category == 'Waste Management' %}selected{% endif %}>
+                  🗑️ Waste Management (Garbage, overflowing dustbins, dumping)
+                </option>
+                <option value="Hospital Services" {% if prefill_category == 'Hospital Services' %}selected{% endif %}>
+                  🏥 Hospital Services (Outdated info, emergency desk, clinic issues)
+                </option>
+                <option value="Road Management" {% if prefill_category == 'Road Management' %}selected{% endif %}>
+                  🛣️ Road Management (Potholes, damaged roads, road repair hazards)
+                </option>
+              </select>
+              <div class="form-text small">Our AI continuously assists in verifying the category from your description below.</div>
+            </div>
+
+            <!-- Complaint Title -->
+            <div class="mb-3">
+              <label class="form-label fw-bold text-dark" data-i18n="form_title">
+                <i class="fa-solid fa-heading text-primary me-1"></i> Complaint Title / Summary <span class="text-danger">*</span>
+              </label>
+              <input type="text" name="title" id="complaint-title" class="form-control" placeholder="e.g. Overflowing garbage bin near market / Deep pothole on main road" required>
+            </div>
+
+            <!-- Description -->
+            <div class="mb-3">
+              <label class="form-label fw-bold text-dark" data-i18n="form_desc">
+                <i class="fa-solid fa-align-left text-primary me-1"></i> Issue Description <span class="text-danger">*</span>
+              </label>
+              <textarea name="description" id="complaint-description" rows="4" class="form-control" placeholder="Provide specific details about the issue (e.g. how long has it been unresolved, hazards to traffic or public health)..." required></textarea>
+              <div class="form-text small text-muted">
+                <i class="fa-solid fa-wand-magic-sparkles text-primary me-1"></i> <em>SmartCity Connect AI automatically analyzes this text to verify categorization and route to the correct municipal ward engineer.</em>
+              </div>
+            </div>
+
+            <!-- Location Section with Text, GPS Auto-detect, and Interactive Map Picker -->
+            <div class="mb-4">
+              <div class="d-flex justify-content-between align-items-center mb-1">
+                <label class="form-label fw-bold text-dark mb-0" data-i18n="form_location">
+                  <i class="fa-solid fa-location-dot text-danger me-1"></i> Location / Street / Landmark <span class="text-danger">*</span>
+                </label>
+                <button type="button" id="btn-get-location" class="btn btn-outline-primary btn-sm">
+                  <i class="fa-solid fa-location-crosshairs me-1"></i> Auto-Detect GPS
+                </button>
+              </div>
+              <input type="text" name="location_name" id="complaint-location" class="form-control mb-2" placeholder="e.g., 5th Cross, 100ft Road, Indiranagar or nearby prominent landmark" required>
+
+              <!-- Optional Coordinates from Map -->
+              <input type="hidden" name="latitude" id="complaint-lat" value="12.9716">
+              <input type="hidden" name="longitude" id="complaint-lng" value="77.5946">
+
+              <div class="small text-muted mb-1 d-flex justify-content-between">
+                <span><i class="fa-solid fa-map-pin text-primary me-1"></i> Pinpoint exact location on map (Click on map to drop pin):</span>
+                <span id="pin-coords-hint" class="badge bg-light text-muted border">Lat: 12.9716, Lng: 77.5946</span>
+              </div>
+              <div id="picker-map"></div>
+            </div>
+
+            <!-- Optional Image Upload -->
+            <div class="mb-4">
+              <label class="form-label fw-bold text-dark" data-i18n="form_photo">
+                <i class="fa-solid fa-camera text-primary me-1"></i> Upload Issue Photograph (Optional)
+              </label>
+              <input type="file" name="image" id="complaint-image" class="form-control" accept="image/*">
+              <div class="form-text small">Attaching photos of the pothole or garbage dump speeds up municipal resolution. Supported formats: JPG, PNG, WEBP.</div>
+              
+              <!-- Image Preview Container -->
+              <div id="image-preview-container" class="mt-2 text-center" style="display: none;">
+                <img id="image-preview" src="" alt="Issue Preview" class="img-thumbnail" style="max-height: 220px; border-radius: 10px;">
+              </div>
+            </div>
+
+            <!-- Optional Citizen Contact Info -->
+            <div class="row g-3 mb-4 p-3 bg-light rounded-3">
+              <div class="col-12">
+                <h6 class="fw-bold mb-0 text-muted"><i class="fa-solid fa-user-shield me-1"></i> Complainant Details (Optional / Confidential)</h6>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label small">Your Name</label>
+                <input type="text" name="citizen_name" class="form-control form-control-sm" placeholder="Anonymous or Citizen Name">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label small">Contact Phone / Email</label>
+                <input type="text" name="citizen_contact" class="form-control form-control-sm" placeholder="For SMS / Email status notifications">
+              </div>
+            </div>
+
+            <!-- Submit Button -->
+            <div class="d-grid gap-2">
+              <button type="submit" class="btn btn-warning btn-lg fw-bold shadow-sm" data-i18n="form_submit">
+                <i class="fa-solid fa-paper-plane me-2"></i> Submit Complaint & Generate Tracking ID
+              </button>
+            </div>
+          </form>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Initialize Location Picker Map
+  const pickerContainer = document.getElementById('picker-map');
+  if (pickerContainer) {
+    const latInput = document.getElementById('complaint-lat');
+    const lngInput = document.getElementById('complaint-lng');
+    const coordsHint = document.getElementById('pin-coords-hint');
+    const locInput = document.getElementById('complaint-location');
+
+    let defaultLat = 12.9716;
+    let defaultLng = 77.5946;
+
+    const pickMap = L.map('picker-map').setView([defaultLat, defaultLng], 13);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap contributors'
+    }).addTo(pickMap);
+
+    let currentPin = L.marker([defaultLat, defaultLng], { draggable: true }).addTo(pickMap);
+
+    function updateMarker(lat, lng) {
+      currentPin.setLatLng([lat, lng]);
+      latInput.value = lat.toFixed(6);
+      lngInput.value = lng.toFixed(6);
+      coordsHint.textContent = `Lat: ${lat.toFixed(4)}, Lng: ${lng.toFixed(4)}`;
+      if (!locInput.value) {
+        locInput.value = `Pinned Location (Lat: ${lat.toFixed(4)}, Lng: ${lng.toFixed(4)})`;
+      }
+    }
+
+    pickMap.on('click', function(e) {
+      updateMarker(e.latlng.lat, e.latlng.lng);
+    });
+
+    currentPin.on('dragend', function(e) {
+      const pos = e.target.getLatLng();
+      updateMarker(pos.lat, pos.lng);
+    });
+  }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,303 @@
+{% extends "base.html" %}
+
+{% block title %}SmartCity Connect – Smart City Information and Civic Issue Management Portal{% endblock %}
+
+{% block content %}
+<!-- 1. Hero / Welcome Section with Global Search -->
+<section class="hero-section text-center">
+  <div class="container position-relative" style="z-index: 2;">
+    <div class="badge bg-primary-subtle text-primary border border-primary-subtle px-3 py-2 rounded-pill mb-3 fw-bold">
+      <span class="pulse-badge me-2"></span> Smart City Digital Infrastructure Portal
+    </div>
+    
+    <h1 class="display-5 fw-bold mb-3 text-white" data-i18n="hero_title">
+      Empowering Citizens, Connecting Civic Services
+    </h1>
+    <p class="lead text-white-50 mx-auto mb-4" style="max-width: 750px;" data-i18n="hero_desc">
+      A unified smart city platform for city cleanliness, verified healthcare facilities, and smooth road infrastructure.
+    </p>
+
+    <!-- Global Search Bar -->
+    <div class="hero-search-box">
+      <form action="{{ url_for('services') }}" method="GET" class="d-flex">
+        <input type="text" name="q" class="form-control" placeholder="Search waste collection points, hospitals, or road conditions..." data-i18n="search_placeholder" aria-label="Search">
+        <button class="btn btn-primary d-flex align-items-center" type="submit">
+          <i class="fa-solid fa-magnifying-glass me-2"></i> <span data-i18n="search_btn">Search</span>
+        </button>
+      </form>
+    </div>
+
+    <!-- Quick Action Buttons: Report an Issue & Track Complaint -->
+    <div class="d-flex justify-content-center gap-3 mt-4 flex-wrap">
+      <a href="{{ url_for('report_issue') }}" class="btn btn-warning px-4 py-2 fw-bold shadow-sm d-flex align-items-center">
+        <i class="fa-solid fa-circle-exclamation fs-5 me-2"></i> <span data-i18n="report_issue">Report an Issue</span>
+      </a>
+      <a href="{{ url_for('track_issue') }}" class="btn btn-outline-light px-4 py-2 fw-semibold shadow-sm d-flex align-items-center">
+        <i class="fa-solid fa-magnifying-glass-location fs-5 me-2"></i> <span data-i18n="track_complaint">Track Complaint</span>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- 2. The EXACTLY THREE Main Service Cards Section -->
+<section class="py-5 bg-white">
+  <div class="container">
+    <div class="text-center mb-5">
+      <span class="text-primary fw-bold text-uppercase small tracking-wide">Civic Portfolios</span>
+      <h2 class="fw-bold mt-1" data-i18n="services_heading">Core City Services</h2>
+      <p class="text-muted mx-auto" style="max-width: 650px;" data-i18n="services_subheading">
+        Access real-time information, locate facilities, and report issues for our three primary municipal sectors.
+      </p>
+    </div>
+
+    <div class="row g-4">
+      <!-- 1. WASTE MANAGEMENT CARD -->
+      <div class="col-lg-4 col-md-6">
+        <div class="service-card card-waste p-4">
+          <div class="card-icon-wrapper">
+            🗑️
+          </div>
+          <span class="badge badge-waste align-self-start mb-2 px-3 py-1 rounded-pill">Waste & Sanitation</span>
+          <h4 class="fw-bold mb-2" data-i18n="card_waste_title">Waste Management</h4>
+          <p class="text-muted small mb-3" data-i18n="card_waste_desc">
+            Daily garbage collection schedules, ward recycling centers, and uncollected trash reporting.
+          </p>
+
+          <ul class="service-features-list flex-grow-1">
+            <li><i class="fa-solid fa-check text-success"></i> <span data-i18n="feat_waste_1">Waste collection schedules & routes</span></li>
+            <li><i class="fa-solid fa-check text-success"></i> <span data-i18n="feat_waste_2">Segregation points & bio-compost centers</span></li>
+            <li><i class="fa-solid fa-check text-success"></i> <span data-i18n="feat_waste_3">Garbage overflow & cleanup reports</span></li>
+            <li><i class="fa-solid fa-check text-success"></i> <span>Uncollected garbage complaint tracking</span></li>
+          </ul>
+
+          <div class="pt-3 border-top mt-auto d-flex justify-content-between align-items-center">
+            <a href="{{ url_for('waste') }}" class="btn btn-outline-success btn-sm fw-semibold">
+              <span data-i18n="view_details">Explore Service</span> <i class="fa-solid fa-arrow-right ms-1"></i>
+            </a>
+            <a href="{{ url_for('report_issue', category='Waste Management') }}" class="btn btn-sm btn-link text-success text-decoration-none fw-semibold">
+              <i class="fa-solid fa-flag me-1"></i> <span data-i18n="report_this_issue">Report Problem</span>
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- 2. HOSPITAL SERVICES CARD -->
+      <div class="col-lg-4 col-md-6">
+        <div class="service-card card-hospital p-4">
+          <div class="card-icon-wrapper">
+            🏥
+          </div>
+          <span class="badge badge-hospital align-self-start mb-2 px-3 py-1 rounded-pill">Healthcare & Emergency</span>
+          <h4 class="fw-bold mb-2" data-i18n="card_hospital_title">Hospital Services</h4>
+          <p class="text-muted small mb-3" data-i18n="card_hospital_desc">
+            Verified 24/7 emergency departments, nearby hospitals, OPD schedules, and casualty helplines.
+          </p>
+
+          <ul class="service-features-list flex-grow-1">
+            <li><i class="fa-solid fa-check text-danger"></i> <span data-i18n="feat_hosp_1">24/7 Verified Emergency & Trauma care</span></li>
+            <li><i class="fa-solid fa-check text-danger"></i> <span data-i18n="feat_hosp_2">Nearby hospital locator & directions</span></li>
+            <li><i class="fa-solid fa-check text-danger"></i> <span data-i18n="feat_hosp_3">OPD hours & blood bank availability</span></li>
+            <li><i class="fa-solid fa-check text-danger"></i> <span>Hospital information updates & grievance desk</span></li>
+          </ul>
+
+          <div class="pt-3 border-top mt-auto d-flex justify-content-between align-items-center">
+            <a href="{{ url_for('hospitals') }}" class="btn btn-outline-danger btn-sm fw-semibold">
+              <span data-i18n="view_details">Explore Service</span> <i class="fa-solid fa-arrow-right ms-1"></i>
+            </a>
+            <a href="{{ url_for('report_issue', category='Hospital Services') }}" class="btn btn-sm btn-link text-danger text-decoration-none fw-semibold">
+              <i class="fa-solid fa-flag me-1"></i> <span data-i18n="report_this_issue">Report Problem</span>
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- 3. ROAD MANAGEMENT CARD -->
+      <div class="col-lg-4 col-md-6">
+        <div class="service-card card-road p-4">
+          <div class="card-icon-wrapper">
+            🛣️
+          </div>
+          <span class="badge badge-road align-self-start mb-2 px-3 py-1 rounded-pill">Roads & Infrastructure</span>
+          <h4 class="fw-bold mb-2" data-i18n="card_road_title">Road Management</h4>
+          <p class="text-muted small mb-3" data-i18n="card_road_desc">
+            Pothole reporting, damaged road alerts, live road repair updates, and maintenance announcements.
+          </p>
+
+          <ul class="service-features-list flex-grow-1">
+            <li><i class="fa-solid fa-check text-warning"></i> <span data-i18n="feat_road_1">Live road surface condition alerts</span></li>
+            <li><i class="fa-solid fa-check text-warning"></i> <span data-i18n="feat_road_2">Damaged road & pothole geotagging</span></li>
+            <li><i class="fa-solid fa-check text-warning"></i> <span data-i18n="feat_road_3">Night maintenance & detour notices</span></li>
+            <li><i class="fa-solid fa-check text-warning"></i> <span>Road repair updates and issue resolution</span></li>
+          </ul>
+
+          <div class="pt-3 border-top mt-auto d-flex justify-content-between align-items-center">
+            <a href="{{ url_for('roads') }}" class="btn btn-outline-warning btn-sm fw-semibold text-dark">
+              <span data-i18n="view_details">Explore Service</span> <i class="fa-solid fa-arrow-right ms-1"></i>
+            </a>
+            <a href="{{ url_for('report_issue', category='Road Management') }}" class="btn btn-sm btn-link text-warning text-dark text-decoration-none fw-semibold">
+              <i class="fa-solid fa-flag me-1"></i> <span data-i18n="report_this_issue">Report Problem</span>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 3. Key Portal Statistics & Resolution Metrics -->
+<section class="py-5 bg-light">
+  <div class="container">
+    <div class="row g-4 text-center">
+      <div class="col-lg-3 col-sm-6">
+        <div class="stat-card">
+          <div class="stat-number text-primary">{{ analytics.total }}</div>
+          <div class="text-muted fw-semibold small" data-i18n="stat_total_reports">Total Civic Reports</div>
+        </div>
+      </div>
+      <div class="col-lg-3 col-sm-6">
+        <div class="stat-card">
+          <div class="stat-number text-success">{{ analytics.resolved }}</div>
+          <div class="text-muted fw-semibold small" data-i18n="stat_resolved">Resolved Issues</div>
+        </div>
+      </div>
+      <div class="col-lg-3 col-sm-6">
+        <div class="stat-card">
+          <div class="stat-number text-warning">{{ analytics.pending }}</div>
+          <div class="text-muted fw-semibold small">Active / Under Progress</div>
+        </div>
+      </div>
+      <div class="col-lg-3 col-sm-6">
+        <div class="stat-card">
+          <div class="stat-number text-info">{{ analytics.facilities_count }}</div>
+          <div class="text-muted fw-semibold small" data-i18n="stat_facilities">Active Facilities Mapped</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 4. Latest Civic Announcements -->
+<section class="py-5 bg-white border-top border-bottom">
+  <div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+      <div>
+        <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-3 py-1 rounded-pill mb-1">
+          <i class="fa-solid fa-bullhorn me-1"></i> Official Updates
+        </span>
+        <h3 class="fw-bold mb-0" data-i18n="announcements">Latest Municipal Announcements</h3>
+      </div>
+      <a href="{{ url_for('announcements') }}" class="btn btn-outline-primary btn-sm">
+        View All Announcements <i class="fa-solid fa-arrow-right ms-1"></i>
+      </a>
+    </div>
+
+    <div class="row g-3">
+      {% for ann in announcements %}
+      <div class="col-md-6">
+        <div class="card h-100 shadow-sm border-0 border-start border-4 {% if ann.category == 'Waste Management' %}border-success{% elif ann.category == 'Hospital Services' %}border-danger{% elif ann.category == 'Road Management' %}border-warning{% else %}border-primary{% endif %} p-3">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <span class="badge {% if ann.category == 'Waste Management' %}badge-waste{% elif ann.category == 'Hospital Services' %}badge-hospital{% elif ann.category == 'Road Management' %}badge-road{% else %}bg-secondary{% endif %}">
+              {{ ann.category }}
+            </span>
+            <small class="text-muted">{{ ann.created_at[:10] }}</small>
+          </div>
+          <h6 class="fw-bold mb-1">{{ ann.title }}</h6>
+          <p class="text-muted small mb-0">{{ ann.content }}</p>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- 5. Interactive City Map Preview -->
+<section class="py-5 bg-light">
+  <div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+      <div>
+        <h3 class="fw-bold mb-0" data-i18n="city_map">Interactive City Facilities Map</h3>
+        <p class="text-muted small mb-0">Locate waste centers, hospitals with emergency services, and road maintenance zones.</p>
+      </div>
+      <div class="d-flex gap-2">
+        <a href="{{ url_for('map_view') }}" class="btn btn-primary btn-sm">
+          <i class="fa-solid fa-expand me-1"></i> Open Fullscreen Map
+        </a>
+      </div>
+    </div>
+
+    <div id="home-map" style="height: 380px; border-radius: 14px; border: 1px solid #cbd5e1; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);"></div>
+  </div>
+</section>
+
+<!-- 6. Call to Action / How It Works -->
+<section class="py-5 bg-primary text-white text-center">
+  <div class="container">
+    <h2 class="fw-bold mb-3">Notice a Civic Problem in Your Neighborhood?</h2>
+    <p class="lead text-white-50 mx-auto mb-4" style="max-width: 600px;">
+      Report uncollected waste, medical service issues, or road potholes in less than two minutes. Track transparently until resolution.
+    </p>
+    <div class="d-flex justify-content-center gap-3 flex-wrap">
+      <a href="{{ url_for('report_issue') }}" class="btn btn-light btn-lg text-primary fw-bold px-4">
+        <i class="fa-solid fa-pen-to-square me-2"></i> Report an Issue
+      </a>
+      <a href="{{ url_for('track_issue') }}" class="btn btn-outline-light btn-lg fw-semibold px-4">
+        <i class="fa-solid fa-magnifying-glass me-2"></i> Track Complaint Status
+      </a>
+    </div>
+  </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Initialize Mini Map for Homepage
+  const mapElem = document.getElementById('home-map');
+  if (mapElem) {
+    const map = L.map('home-map').setView([12.9716, 77.5946], 12);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
+
+    // Fetch facilities
+    fetch('/api/facilities')
+      .then(res => res.json())
+      .then(facilities => {
+        facilities.forEach(fac => {
+          let markerColor = '#059669';
+          let iconEmoji = '🗑️';
+          if (fac.category === 'Hospital Services') {
+            markerColor = '#dc2626';
+            iconEmoji = '🏥';
+          } else if (fac.category === 'Road Management') {
+            markerColor = '#d97706';
+            iconEmoji = '🛣️';
+          }
+
+          const customIcon = L.divIcon({
+            html: `<div style="background:${markerColor}; color:#fff; width:34px; height:34px; border-radius:50%; display:flex; align-items:center; justify-content:center; box-shadow:0 2px 6px rgba(0,0,0,0.3); font-size:16px; border:2px solid #fff;">${iconEmoji}</div>`,
+            className: 'custom-leaflet-pin',
+            iconSize: [34, 34],
+            iconAnchor: [17, 17]
+          });
+
+          const popupContent = `
+            <div style="min-width:200px;">
+              <span class="badge bg-light text-dark border mb-1">${fac.category}</span>
+              <h6 class="fw-bold mb-1">${fac.name}</h6>
+              <p class="small text-muted mb-1">${fac.address}</p>
+              <div class="small fw-semibold text-primary"><i class="fa-solid fa-phone me-1"></i> ${fac.contact_number || 'N/A'}</div>
+              <div class="small text-success mt-1"><i class="fa-regular fa-clock me-1"></i> ${fac.operating_hours}</div>
+            </div>
+          `;
+
+          L.marker([fac.latitude, fac.longitude], { icon: customIcon })
+            .bindPopup(popupContent)
+            .addTo(map);
+        });
+      })
+      .catch(err => console.log('Error loading map facilities:', err));
+  }
+});
+</script>
+{% endblock %}

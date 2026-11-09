@@ -1,0 +1,184 @@
+{% extends "base.html" %}
+
+{% block title %}Interactive City Map – SmartCity Connect{% endblock %}
+
+{% block content %}
+<div class="bg-primary text-white py-3">
+  <div class="container d-flex justify-content-between align-items-center flex-wrap gap-2">
+    <div>
+      <h1 class="h3 fw-bold mb-0"><i class="fa-solid fa-map-location-dot me-2"></i> <span data-i18n="city_map">Interactive City Facilities Map</span></h1>
+      <small class="text-white-50">Explore waste processing centers, verified 24/7 hospitals, road maintenance corridors, and public complaints.</small>
+    </div>
+    <div class="d-flex gap-2">
+      <button id="btn-locate-user" class="btn btn-warning btn-sm fw-bold">
+        <i class="fa-solid fa-crosshairs me-1"></i> Locate Me
+      </button>
+      <a href="{{ url_for('report_issue') }}" class="btn btn-outline-light btn-sm">
+        <i class="fa-solid fa-circle-exclamation me-1"></i> Report an Issue
+      </a>
+    </div>
+  </div>
+</div>
+
+<div class="container-fluid px-lg-4 py-3">
+  <!-- Map Category Filter Pills -->
+  <div class="card border-0 shadow-sm mb-3 p-2 bg-white">
+    <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+      <div class="d-flex flex-wrap gap-2 align-items-center">
+        <span class="small fw-bold text-muted text-uppercase me-2"><i class="fa-solid fa-filter me-1"></i> Filter Layers:</span>
+        <button class="btn btn-sm btn-outline-primary active filter-pill" data-layer="all">All Layers</button>
+        <button class="btn btn-sm btn-outline-success filter-pill" data-layer="Waste Management">
+          🗑️ <span data-i18n="waste_mgmt">Waste Management</span>
+        </button>
+        <button class="btn btn-sm btn-outline-danger filter-pill" data-layer="Hospital Services">
+          🏥 <span data-i18n="hospital_services">Hospital Services</span>
+        </button>
+        <button class="btn btn-sm btn-outline-warning text-dark filter-pill" data-layer="Road Management">
+          🛣️ <span data-i18n="road_mgmt">Road Management</span>
+        </button>
+        <button class="btn btn-sm btn-outline-dark filter-pill" data-layer="complaints">
+          ⚠️ Reported Complaints
+        </button>
+      </div>
+
+      <div class="d-flex gap-2 align-items-center small text-muted">
+        <span><span class="badge" style="background:#059669;">&nbsp;</span> Waste</span>
+        <span><span class="badge" style="background:#dc2626;">&nbsp;</span> Hospitals</span>
+        <span><span class="badge" style="background:#d97706;">&nbsp;</span> Roads</span>
+        <span><span class="badge" style="background:#7c3aed;">&nbsp;</span> Complaints</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Interactive Map View -->
+  <div id="full-map" style="height: 650px; width: 100%; border-radius: 12px; border: 1px solid #cbd5e1; box-shadow: 0 4px 10px rgba(0,0,0,0.08);"></div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const map = L.map('full-map').setView([12.9716, 77.5946], 12);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap contributors | SmartCity Connect'
+  }).addTo(map);
+
+  let facilityMarkers = [];
+  let complaintMarkers = [];
+
+  function makeIcon(color, emoji) {
+    return L.divIcon({
+      html: `<div style="background:${color}; color:#fff; width:36px; height:36px; border-radius:50%; display:flex; align-items:center; justify-content:center; box-shadow:0 3px 8px rgba(0,0,0,0.35); font-size:17px; border:2.5px solid #fff;">${emoji}</div>`,
+      className: 'custom-map-icon',
+      iconSize: [36, 36],
+      iconAnchor: [18, 18],
+      popupAnchor: [0, -18]
+    });
+  }
+
+  // Load facilities
+  fetch('/api/facilities')
+    .then(res => res.json())
+    .then(data => {
+      data.forEach(fac => {
+        let color = '#059669';
+        let emoji = '🗑️';
+        if (fac.category === 'Hospital Services') {
+          color = '#dc2626';
+          emoji = '🏥';
+        } else if (fac.category === 'Road Management') {
+          color = '#d97706';
+          emoji = '🛣️';
+        }
+
+        const marker = L.marker([fac.latitude, fac.longitude], { icon: makeIcon(color, emoji) });
+        marker.category = fac.category;
+        
+        const popup = `
+          <div style="min-width: 230px;">
+            <span class="badge ${fac.category === 'Waste Management' ? 'badge-waste' : (fac.category === 'Hospital Services' ? 'badge-hospital' : 'badge-road')} mb-1">${fac.category}</span>
+            <h6 class="fw-bold mb-1">${fac.name}</h6>
+            <p class="small text-muted mb-1"><i class="fa-solid fa-location-dot me-1"></i> ${fac.address}</p>
+            <div class="small p-2 bg-light rounded mb-2">${fac.details || ''}</div>
+            <div class="d-flex justify-content-between align-items-center small">
+              <span class="text-success"><i class="fa-regular fa-clock me-1"></i> ${fac.operating_hours}</span>
+              <a href="tel:${fac.contact_number}" class="fw-bold text-decoration-none"><i class="fa-solid fa-phone me-1"></i> Call</a>
+            </div>
+          </div>
+        `;
+        marker.bindPopup(popup);
+        marker.addTo(map);
+        facilityMarkers.push(marker);
+      });
+    });
+
+  // Load Complaints on Map
+  fetch('/api/complaints-map')
+    .then(res => res.json())
+    .then(complaints => {
+      complaints.forEach(cmp => {
+        const marker = L.marker([cmp.latitude, cmp.longitude], { icon: makeIcon('#7c3aed', '⚠️') });
+        marker.category = 'complaints';
+        const popup = `
+          <div style="min-width: 230px;">
+            <span class="badge bg-purple text-white mb-1" style="background:#7c3aed;">Civic Complaint</span>
+            <span class="badge bg-light text-dark border mb-1">${cmp.status}</span>
+            <h6 class="fw-bold mb-1">${cmp.title}</h6>
+            <p class="small text-muted mb-1"><i class="fa-solid fa-location-dot me-1"></i> ${cmp.location_name}</p>
+            <p class="small mb-2">${cmp.description}</p>
+            <a href="/track/${cmp.tracking_id}" class="btn btn-sm btn-primary w-100">Track Complaint (${cmp.tracking_id})</a>
+          </div>
+        `;
+        marker.bindPopup(popup);
+        marker.addTo(map);
+        complaintMarkers.push(marker);
+      });
+    });
+
+  // Filter Buttons
+  document.querySelectorAll('.filter-pill').forEach(btn => {
+    btn.addEventListener('click', function() {
+      document.querySelectorAll('.filter-pill').forEach(b => b.classList.remove('active'));
+      this.classList.add('active');
+
+      const selected = this.getAttribute('data-layer');
+
+      facilityMarkers.forEach(m => {
+        if (selected === 'all' || m.category === selected) {
+          map.addLayer(m);
+        } else {
+          map.removeLayer(m);
+        }
+      });
+
+      complaintMarkers.forEach(m => {
+        if (selected === 'all' || selected === 'complaints') {
+          map.addLayer(m);
+        } else {
+          map.removeLayer(m);
+        }
+      });
+    });
+  });
+
+  // Locate User GPS
+  const locateBtn = document.getElementById('btn-locate-user');
+  if (locateBtn) {
+    locateBtn.addEventListener('click', function() {
+      if (!navigator.geolocation) {
+        alert('Geolocation not supported by browser.');
+        return;
+      }
+      navigator.geolocation.getCurrentPosition(function(pos) {
+        const lat = pos.coords.latitude;
+        const lng = pos.coords.longitude;
+        map.setView([lat, lng], 14);
+        L.marker([lat, lng], {
+          icon: makeIcon('#2563eb', '📍')
+        }).bindPopup("<b>You are here</b>").addTo(map).openPopup();
+      });
+    });
+  }
+});
+</script>
+{% endblock %}

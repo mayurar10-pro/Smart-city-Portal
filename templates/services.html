@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+
+{% block title %}Smart City Services – SmartCity Connect{% endblock %}
+
+{% block content %}
+<div class="bg-primary text-white py-4">
+  <div class="container">
+    <h1 class="fw-bold mb-1" data-i18n="services">Smart City Services Overview</h1>
+    <p class="text-white-50 mb-0">Explore detailed civic services, operational hours, contacts, and issue reporting for our three core domains.</p>
+  </div>
+</div>
+
+<div class="container py-5">
+  <div class="row g-4">
+    <!-- Service 1: Waste Management -->
+    <div class="col-lg-4">
+      <div class="card h-100 shadow-sm border-0 border-top border-5 border-success">
+        <div class="card-body p-4 d-flex flex-column">
+          <div class="d-flex align-items-center mb-3">
+            <span class="fs-1 me-3">🗑️</span>
+            <div>
+              <h4 class="fw-bold mb-0" data-i18n="waste_mgmt">Waste Management</h4>
+              <span class="badge badge-waste">Cleanliness & Ecology</span>
+            </div>
+          </div>
+          <p class="text-muted small">
+            Manages municipal waste collection, daily door-to-door sanitation, dry waste collection centers, bio-methanization plants, and uncollected trash redressal.
+          </p>
+
+          <h6 class="fw-bold text-success mt-2 mb-2">Key Service Capabilities:</h6>
+          <ul class="list-unstyled small text-muted flex-grow-1">
+            <li class="py-1"><i class="fa-solid fa-calendar-check text-success me-2"></i> Ward-wise daily garbage collection schedules</li>
+            <li class="py-1"><i class="fa-solid fa-recycle text-success me-2"></i> Dry & e-waste collection center locator</li>
+            <li class="py-1"><i class="fa-solid fa-truck text-success me-2"></i> Real-time waste truck route alerts</li>
+            <li class="py-1"><i class="fa-solid fa-camera text-success me-2"></i> Overflowing dustbin & illegal dump reporting</li>
+          </ul>
+
+          <div class="mt-4 pt-3 border-top d-grid gap-2">
+            <a href="{{ url_for('waste') }}" class="btn btn-success fw-semibold">
+              <i class="fa-solid fa-arrow-up-right-from-square me-1"></i> Open Waste Portal
+            </a>
+            <a href="{{ url_for('report_issue', category='Waste Management') }}" class="btn btn-outline-success btn-sm">
+              <i class="fa-solid fa-circle-exclamation me-1"></i> Report Waste Issue
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Service 2: Hospital Services -->
+    <div class="col-lg-4">
+      <div class="card h-100 shadow-sm border-0 border-top border-5 border-danger">
+        <div class="card-body p-4 d-flex flex-column">
+          <div class="d-flex align-items-center mb-3">
+            <span class="fs-1 me-3">🏥</span>
+            <div>
+              <h4 class="fw-bold mb-0" data-i18n="hospital_services">Hospital Services</h4>
+              <span class="badge badge-hospital">Healthcare & Casualty</span>
+            </div>
+          </div>
+          <p class="text-muted small">
+            Provides verified healthcare data, 24/7 emergency departments, trauma centers, blood bank availability, OPD hours, and contact desk grievance redressal.
+          </p>
+
+          <h6 class="fw-bold text-danger mt-2 mb-2">Key Service Capabilities:</h6>
+          <ul class="list-unstyled small text-muted flex-grow-1">
+            <li class="py-1"><i class="fa-solid fa-heart-pulse text-danger me-2"></i> Verified 24/7 Trauma and ICU emergency care</li>
+            <li class="py-1"><i class="fa-solid fa-hospital-user text-danger me-2"></i> Hospital department locator & OPD timings</li>
+            <li class="py-1"><i class="fa-solid fa-phone-volume text-danger me-2"></i> Instant direct contact with casualty desks</li>
+            <li class="py-1"><i class="fa-solid fa-circle-info text-danger me-2"></i> Outdated hospital data and grievance reporting</li>
+          </ul>
+
+          <div class="mt-4 pt-3 border-top d-grid gap-2">
+            <a href="{{ url_for('hospitals') }}" class="btn btn-danger fw-semibold">
+              <i class="fa-solid fa-arrow-up-right-from-square me-1"></i> Open Hospital Directory
+            </a>
+            <a href="{{ url_for('report_issue', category='Hospital Services') }}" class="btn btn-outline-danger btn-sm">
+              <i class="fa-solid fa-circle-exclamation me-1"></i> Report Hospital Info Issue
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Service 3: Road Management -->
+    <div class="col-lg-4">
+      <div class="card h-100 shadow-sm border-0 border-top border-5 border-warning">
+        <div class="card-body p-4 d-flex flex-column">
+          <div class="d-flex align-items-center mb-3">
+            <span class="fs-1 me-3">🛣️</span>
+            <div>
+              <h4 class="fw-bold mb-0" data-i18n="road_mgmt">Road Management</h4>
+              <span class="badge badge-road">Roadways & Safety</span>
+            </div>
+          </div>
+          <p class="text-muted small">
+            Monitors road surface quality, pothole hot-spots, maintenance schedules, traffic diversions, street light functionality, and storm water drain grates.
+          </p>
+
+          <h6 class="fw-bold text-warning text-dark mt-2 mb-2">Key Service Capabilities:</h6>
+          <ul class="list-unstyled small text-muted flex-grow-1">
+            <li class="py-1"><i class="fa-solid fa-road text-warning me-2"></i> Live arterial road condition monitoring</li>
+            <li class="py-1"><i class="fa-solid fa-triangle-exclamation text-warning me-2"></i> Pothole & damaged road geotagged reporting</li>
+            <li class="py-1"><i class="fa-solid fa-person-digging text-warning me-2"></i> Night road resurfacing and closure notices</li>
+            <li class="py-1"><i class="fa-solid fa-shield-halved text-warning me-2"></i> Fast-track 48h emergency pothole patching</li>
+          </ul>
+
+          <div class="mt-4 pt-3 border-top d-grid gap-2">
+            <a href="{{ url_for('roads') }}" class="btn btn-warning fw-semibold text-dark">
+              <i class="fa-solid fa-arrow-up-right-from-square me-1"></i> Open Road Portal
+            </a>
+            <a href="{{ url_for('report_issue', category='Road Management') }}" class="btn btn-outline-warning btn-sm text-dark">
+              <i class="fa-solid fa-circle-exclamation me-1"></i> Report Road Problem
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
