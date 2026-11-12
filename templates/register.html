@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+
+{% block title %}Citizen Registration – SmartCity Connect{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-md-7 col-lg-5">
+      <div class="card border-0 shadow-lg rounded-4 overflow-hidden">
+        <div class="p-4 text-center text-white" style="background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%);">
+          <span class="fs-1 d-block mb-2">👤</span>
+          <h4 class="fw-bold mb-1" data-i18n="register">Citizen Account Registration</h4>
+          <p class="small text-white-50 mb-0">Create your personal account to report civic issues and track resolutions.</p>
+        </div>
+
+        <div class="card-body p-4 p-md-5 bg-white">
+          <form action="{{ url_for('register') }}" method="POST">
+            <!-- Full Name -->
+            <div class="mb-3">
+              <label class="form-label fw-semibold">Full Name <span class="text-danger">*</span></label>
+              <div class="input-group">
+                <span class="input-group-text bg-light border-end-0"><i class="fa-solid fa-user text-muted"></i></span>
+                <input type="text" name="name" class="form-control border-start-0" placeholder="e.g. Ramesh Kumar" required>
+              </div>
+            </div>
+
+            <!-- Mobile Number -->
+            <div class="mb-3">
+              <label class="form-label fw-semibold">Mobile Number <span class="text-danger">*</span></label>
+              <div class="input-group">
+                <span class="input-group-text bg-light border-end-0"><i class="fa-solid fa-phone text-muted"></i> +91</span>
+                <input type="tel" name="mobile_number" class="form-control border-start-0" pattern="[0-9]{10}" placeholder="10-digit mobile number" required>
+              </div>
+              <div class="form-text small">An SMS OTP will be sent to verify this mobile number.</div>
+            </div>
+
+            <!-- Email (Optional) -->
+            <div class="mb-3">
+              <label class="form-label fw-semibold">Email Address <span class="text-muted">(Optional)</span></label>
+              <div class="input-group">
+                <span class="input-group-text bg-light border-end-0"><i class="fa-solid fa-envelope text-muted"></i></span>
+                <input type="email" name="email" class="form-control border-start-0" placeholder="e.g. name@example.com">
+              </div>
+            </div>
+
+            <!-- Password -->
+            <div class="mb-3">
+              <label class="form-label fw-semibold">Password <span class="text-danger">*</span></label>
+              <div class="input-group">
+                <span class="input-group-text bg-light border-end-0"><i class="fa-solid fa-lock text-muted"></i></span>
+                <input type="password" name="password" class="form-control border-start-0" placeholder="Create a strong password (min 6 characters)" minlength="6" required>
+              </div>
+            </div>
+
+            <!-- Confirm Password -->
+            <div class="mb-4">
+              <label class="form-label fw-semibold">Confirm Password <span class="text-danger">*</span></label>
+              <div class="input-group">
+                <span class="input-group-text bg-light border-end-0"><i class="fa-solid fa-shield-halved text-muted"></i></span>
+                <input type="password" name="confirm_password" class="form-control border-start-0" placeholder="Re-enter your password" minlength="6" required>
+              </div>
+            </div>
+
+            <div class="d-grid gap-2 mb-3">
+              <button type="submit" class="btn btn-primary btn-lg fw-bold shadow-sm">
+                <i class="fa-solid fa-user-plus me-1"></i> Register & Verify Mobile (OTP)
+              </button>
+            </div>
+
+            <div class="text-center small text-muted">
+              Already have a citizen account? <a href="{{ url_for('login') }}" class="text-primary fw-bold">Sign In Here</a>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

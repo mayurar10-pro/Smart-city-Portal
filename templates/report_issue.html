@@ -9,7 +9,7 @@
       <span class="fs-2 me-2">📝</span>
       <h1 class="h3 fw-bold mb-0" data-i18n="complaint_form_title">Civic Issue Reporting System</h1>
     </div>
-    <p class="text-white-50 mb-0">Report problems across Waste Management, Hospital Services, or Road Management for municipal investigation and resolution.</p>
+    <p class="text-white-50 mb-0">Report problems across Waste Management, Hospital Services, or Road Management with verified camera photos and GPS location.</p>
   </div>
 </div>
 
@@ -19,7 +19,7 @@
       <div class="card border-0 shadow-sm rounded-4">
         <div class="card-body p-4 p-md-5">
 
-          <!-- AI Categorization Suggestion Box (Hidden by default, shown dynamically via JS) -->
+          <!-- AI Categorization Suggestion Box -->
           <div id="ai-recommendation-box" class="ai-recommendation-box" style="display: none; cursor: pointer;">
             <div class="d-flex align-items-center">
               <span class="pulse-badge me-2"></span>
@@ -44,13 +44,13 @@
               </label>
               <select name="category" id="complaint-category" class="form-select form-select-lg" required>
                 <option value="Waste Management" {% if prefill_category == 'Waste Management' %}selected{% endif %}>
-                  🗑️ Waste Management (Garbage, overflowing dustbins, dumping)
+                  🗑️ Waste Management (Garbage, overflowing dustbins, uncollected waste)
                 </option>
                 <option value="Hospital Services" {% if prefill_category == 'Hospital Services' %}selected{% endif %}>
                   🏥 Hospital Services (Outdated info, emergency desk, clinic issues)
                 </option>
                 <option value="Road Management" {% if prefill_category == 'Road Management' %}selected{% endif %}>
-                  🛣️ Road Management (Potholes, damaged roads, road repair hazards)
+                  🛣️ Road Management (Potholes, damaged roads, road maintenance hazards)
                 </option>
               </select>
               <div class="form-text small">Our AI continuously assists in verifying the category from your description below.</div>
@@ -61,69 +61,86 @@
               <label class="form-label fw-bold text-dark" data-i18n="form_title">
                 <i class="fa-solid fa-heading text-primary me-1"></i> Complaint Title / Summary <span class="text-danger">*</span>
               </label>
-              <input type="text" name="title" id="complaint-title" class="form-control" placeholder="e.g. Overflowing garbage bin near market / Deep pothole on main road" required>
+              <input type="text" name="title" id="complaint-title" class="form-control" placeholder="e.g. Deep pothole on 100ft road / Overflowing garbage dumpster" required>
             </div>
 
             <!-- Description -->
-            <div class="mb-3">
+            <div class="mb-4">
               <label class="form-label fw-bold text-dark" data-i18n="form_desc">
                 <i class="fa-solid fa-align-left text-primary me-1"></i> Issue Description <span class="text-danger">*</span>
               </label>
               <textarea name="description" id="complaint-description" rows="4" class="form-control" placeholder="Provide specific details about the issue (e.g. how long has it been unresolved, hazards to traffic or public health)..." required></textarea>
               <div class="form-text small text-muted">
-                <i class="fa-solid fa-wand-magic-sparkles text-primary me-1"></i> <em>SmartCity Connect AI automatically analyzes this text to verify categorization and route to the correct municipal ward engineer.</em>
+                <i class="fa-solid fa-wand-magic-sparkles text-primary me-1"></i> <em>SmartCity Connect AI analyzes this text to verify categorization and route to the correct municipal ward engineer.</em>
               </div>
             </div>
 
-            <!-- Location Section with Text, GPS Auto-detect, and Interactive Map Picker -->
-            <div class="mb-4">
-              <div class="d-flex justify-content-between align-items-center mb-1">
-                <label class="form-label fw-bold text-dark mb-0" data-i18n="form_location">
-                  <i class="fa-solid fa-location-dot text-danger me-1"></i> Location / Street / Landmark <span class="text-danger">*</span>
+            <!-- Photograph Evidence Section (Live Camera or File Upload) -->
+            <div class="mb-4 p-3 bg-light rounded-3 border">
+              <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
+                <label class="form-label fw-bold text-dark mb-0">
+                  <i class="fa-solid fa-camera text-primary me-1"></i> Supporting Photographic Evidence
                 </label>
-                <button type="button" id="btn-get-location" class="btn btn-outline-primary btn-sm">
-                  <i class="fa-solid fa-location-crosshairs me-1"></i> Auto-Detect GPS
+                <span id="photo-evidence-badge"></span>
+              </div>
+
+              <!-- Action Buttons: Live Camera or File Upload -->
+              <div class="row g-2 mb-3">
+                <div class="col-sm-6">
+                  <button type="button" id="btn-open-camera" class="btn btn-outline-primary w-100 fw-bold py-2">
+                    <i class="fa-solid fa-camera me-1"></i> Open Camera & Capture Issue
+                  </button>
+                </div>
+                <div class="col-sm-6">
+                  <input type="file" name="image" id="complaint-image" class="form-control py-2" accept="image/*">
+                </div>
+              </div>
+
+              <!-- Hidden Input for Base64 Captured Camera Data -->
+              <input type="hidden" name="camera_captured_data" id="camera-captured-data" value="">
+
+              <div class="form-text small text-muted">
+                <i class="fa-solid fa-shield-halved text-success me-1"></i> <em>Photographs and GPS coordinates serve as supporting evidence for field inspection teams. Camera permission is requested only upon clicking the button.</em>
+              </div>
+
+              <!-- Preview Container -->
+              <div id="image-preview-container" class="mt-3 text-center" style="display: none;">
+                <img id="image-preview" src="" alt="Issue Preview" class="img-thumbnail shadow-sm" style="max-height: 220px; border-radius: 10px;">
+              </div>
+            </div>
+
+            <!-- GPS Location & Map Section -->
+            <div class="mb-4 p-3 bg-light rounded-3 border">
+              <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
+                <label class="form-label fw-bold text-dark mb-0">
+                  <i class="fa-solid fa-location-dot text-danger me-1"></i> Location & GPS Coordinates <span class="text-danger">*</span>
+                </label>
+                <button type="button" id="btn-get-location" class="btn btn-primary btn-sm fw-semibold">
+                  <i class="fa-solid fa-location-crosshairs me-1"></i> Use My Current Location
                 </button>
               </div>
-              <input type="text" name="location_name" id="complaint-location" class="form-control mb-2" placeholder="e.g., 5th Cross, 100ft Road, Indiranagar or nearby prominent landmark" required>
 
-              <!-- Optional Coordinates from Map -->
+              <input type="text" name="readable_address" id="complaint-location" class="form-control mb-2" placeholder="Street name, landmark, or reverse-geocoded address..." required>
+
+              <!-- Hidden Coordinates & Accuracy -->
               <input type="hidden" name="latitude" id="complaint-lat" value="12.9716">
               <input type="hidden" name="longitude" id="complaint-lng" value="77.5946">
+              <input type="hidden" name="location_accuracy" id="complaint-accuracy" value="15.0">
 
-              <div class="small text-muted mb-1 d-flex justify-content-between">
-                <span><i class="fa-solid fa-map-pin text-primary me-1"></i> Pinpoint exact location on map (Click on map to drop pin):</span>
-                <span id="pin-coords-hint" class="badge bg-light text-muted border">Lat: 12.9716, Lng: 77.5946</span>
+              <div class="d-flex justify-content-between align-items-center small text-muted mb-2">
+                <span><i class="fa-solid fa-hand-pointer text-primary me-1"></i> Click on map or drag pin to fine-tune exact spot:</span>
+                <span id="location-accuracy-badge"><span class="badge bg-light text-muted border">Default Coordinates Set</span></span>
               </div>
-              <div id="picker-map"></div>
+
+              <div id="picker-map" style="height: 280px; width: 100%; border-radius: 8px; border: 1px solid #cbd5e1;"></div>
             </div>
 
-            <!-- Optional Image Upload -->
-            <div class="mb-4">
-              <label class="form-label fw-bold text-dark" data-i18n="form_photo">
-                <i class="fa-solid fa-camera text-primary me-1"></i> Upload Issue Photograph (Optional)
-              </label>
-              <input type="file" name="image" id="complaint-image" class="form-control" accept="image/*">
-              <div class="form-text small">Attaching photos of the pothole or garbage dump speeds up municipal resolution. Supported formats: JPG, PNG, WEBP.</div>
-              
-              <!-- Image Preview Container -->
-              <div id="image-preview-container" class="mt-2 text-center" style="display: none;">
-                <img id="image-preview" src="" alt="Issue Preview" class="img-thumbnail" style="max-height: 220px; border-radius: 10px;">
-              </div>
-            </div>
-
-            <!-- Optional Citizen Contact Info -->
-            <div class="row g-3 mb-4 p-3 bg-light rounded-3">
-              <div class="col-12">
-                <h6 class="fw-bold mb-0 text-muted"><i class="fa-solid fa-user-shield me-1"></i> Complainant Details (Optional / Confidential)</h6>
-              </div>
-              <div class="col-md-6">
-                <label class="form-label small">Your Name</label>
-                <input type="text" name="citizen_name" class="form-control form-control-sm" placeholder="Anonymous or Citizen Name">
-              </div>
-              <div class="col-md-6">
-                <label class="form-label small">Contact Phone / Email</label>
-                <input type="text" name="citizen_contact" class="form-control form-control-sm" placeholder="For SMS / Email status notifications">
+            <!-- Citizen Authenticated Notice -->
+            <div class="alert alert-light border small text-muted mb-4 d-flex align-items-center">
+              <i class="fa-solid fa-user-check text-success fs-5 me-2"></i>
+              <div>
+                Logged in as <strong>{{ current_user.name }}</strong> (+91 {{ current_user.mobile_number }}).
+                This complaint will be securely attached to your personal dashboard.
               </div>
             </div>
 
@@ -140,48 +157,45 @@
     </div>
   </div>
 </div>
+
+<!-- Camera Access Modal (MediaDevices getUserMedia) -->
+<div class="modal fade" id="cameraModal" tabindex="-1" aria-labelledby="cameraModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content rounded-4 border-0 shadow">
+      <div class="modal-header bg-dark text-white">
+        <h5 class="modal-title fw-bold" id="cameraModalLabel"><i class="fa-solid fa-camera me-2 text-warning"></i> Capture Civic Issue</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-3 text-center bg-black">
+        <div id="camera-error" class="alert alert-danger mb-0" style="display: none;"></div>
+        
+        <!-- Live Video Element -->
+        <video id="camera-video" autoplay playsinline style="width: 100%; max-height: 380px; border-radius: 8px; background: #111;"></video>
+        
+        <!-- Snapshot Canvas (shown after snap) -->
+        <canvas id="camera-canvas" style="display: none; width: 100%; max-height: 380px; border-radius: 8px;"></canvas>
+      </div>
+      <div class="modal-footer bg-light d-flex justify-content-between">
+        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+        <div>
+          <button type="button" id="btn-retake-photo" class="btn btn-outline-dark btn-sm me-1" style="display: none;">
+            <i class="fa-solid fa-rotate-left me-1"></i> Retake
+          </button>
+          <button type="button" id="btn-capture-photo" class="btn btn-primary fw-bold">
+            <i class="fa-solid fa-circle-dot me-1"></i> Snap Photo
+          </button>
+          <button type="button" id="btn-confirm-photo" class="btn btn-success fw-bold" style="display: none;">
+            <i class="fa-solid fa-check me-1"></i> Use Photo
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 {% endblock %}
 
 {% block extra_js %}
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-  // Initialize Location Picker Map
-  const pickerContainer = document.getElementById('picker-map');
-  if (pickerContainer) {
-    const latInput = document.getElementById('complaint-lat');
-    const lngInput = document.getElementById('complaint-lng');
-    const coordsHint = document.getElementById('pin-coords-hint');
-    const locInput = document.getElementById('complaint-location');
-
-    let defaultLat = 12.9716;
-    let defaultLng = 77.5946;
-
-    const pickMap = L.map('picker-map').setView([defaultLat, defaultLng], 13);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© OpenStreetMap contributors'
-    }).addTo(pickMap);
-
-    let currentPin = L.marker([defaultLat, defaultLng], { draggable: true }).addTo(pickMap);
-
-    function updateMarker(lat, lng) {
-      currentPin.setLatLng([lat, lng]);
-      latInput.value = lat.toFixed(6);
-      lngInput.value = lng.toFixed(6);
-      coordsHint.textContent = `Lat: ${lat.toFixed(4)}, Lng: ${lng.toFixed(4)}`;
-      if (!locInput.value) {
-        locInput.value = `Pinned Location (Lat: ${lat.toFixed(4)}, Lng: ${lng.toFixed(4)})`;
-      }
-    }
-
-    pickMap.on('click', function(e) {
-      updateMarker(e.latlng.lat, e.latlng.lng);
-    });
-
-    currentPin.on('dragend', function(e) {
-      const pos = e.target.getLatLng();
-      updateMarker(pos.lat, pos.lng);
-    });
-  }
-});
-</script>
+<!-- Include Camera & Geolocation Scripts -->
+<script src="{{ url_for('static', filename='js/camera.js') }}"></script>
+<script src="{{ url_for('static', filename='js/location.js') }}"></script>
 {% endblock %}

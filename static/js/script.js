@@ -1,13 +1,11 @@
 /**
- * SmartCity Connect - Core JavaScript
+ * SmartCity Connect - Core UI & Bilingual Script
  * Features:
- * 1. Bilingual Switcher (English <-> Kannada ಕನ್ನಡ)
- * 2. Real-time AI Complaint Categorization
- * 3. Leaflet Map Markers & Location Picker
- * 4. Image Preview
+ * 1. English <-> Kannada (ಕನ್ನಡ) Language Switcher
+ * 2. Real-time AI Complaint Categorization Assistant
+ * 3. File & Captured Image Preview Handler
  */
 
-// --- 1. TRANSLATION DICTIONARY (English & Kannada) ---
 const TRANSLATIONS = {
   en: {
     portal_title: "SmartCity Connect",
@@ -17,23 +15,24 @@ const TRANSLATIONS = {
     waste_mgmt: "Waste Management",
     hospital_services: "Hospital Services",
     road_mgmt: "Road Management",
-    city_map: "Interactive Map",
+    city_map: "City Map",
     report_issue: "Report an Issue",
-    track_complaint: "Track Complaint",
+    track_complaint: "Track Issue",
     announcements: "Announcements",
-    admin_login: "Admin Portal",
-    admin_dashboard: "Admin Dashboard",
-    logout: "Logout",
-    
+    login: "Citizen Login",
+    register: "Register",
+    dashboard: "My Dashboard",
+    logout: "Sign Out",
+
     // Hero
     hero_title: "Empowering Citizens, Connecting Civic Services",
-    hero_desc: "A unified smart city platform for city cleanliness, verified healthcare facilities, and smooth road infrastructure.",
+    hero_desc: "A unified smart city platform for waste management, verified healthcare, and road infrastructure.",
     search_placeholder: "Search waste collection points, hospitals, or road conditions...",
     search_btn: "Search",
-    
+
     // Service Cards
     services_heading: "Core City Services",
-    services_subheading: "Access real-time information, locate facilities, and report issues for our three primary municipal sectors.",
+    services_subheading: "Access verified information, locate facilities, and report issues for our three primary municipal portfolios.",
     card_waste_title: "Waste Management",
     card_waste_desc: "Daily garbage collection schedules, ward recycling centers, and uncollected trash reporting.",
     card_hospital_title: "Hospital Services",
@@ -54,30 +53,16 @@ const TRANSLATIONS = {
     feat_road_2: "Damaged road & pothole geotagging",
     feat_road_3: "Night maintenance & detour notices",
 
-    // Tracking & Reporting
+    // Reporting Form
     complaint_form_title: "Civic Issue Reporting System",
     form_category: "Service Category",
     form_title: "Complaint Title / Summary",
     form_desc: "Issue Description (Details)",
-    form_location: "Location / Landmark / Street",
-    form_photo: "Attach Photograph (Optional)",
+    form_location: "Location / Street / Landmark",
+    form_photo: "Photograph (Camera or Upload)",
     form_submit: "Submit Complaint & Get Tracking ID",
     ai_suggested: "AI Suggested Category:",
     click_to_apply: "Click to apply",
-
-    // Statuses
-    status_submitted: "Submitted",
-    status_under_review: "Under Review",
-    status_assigned: "Assigned",
-    status_in_progress: "In Progress",
-    status_resolved: "Resolved",
-    status_rejected: "Rejected",
-
-    // Quick Stats
-    stat_total_reports: "Total Reports Handled",
-    stat_resolved: "Resolved Issues",
-    stat_facilities: "Active Facilities",
-    stat_satisfaction: "Average Resolution Rate",
 
     // Footer
     emergency_title: "Emergency Helplines",
@@ -96,10 +81,11 @@ const TRANSLATIONS = {
     road_mgmt: "ರಸ್ತೆ ನಿರ್ವಹಣೆ",
     city_map: "ನಗರದ ನಕ್ಷೆ",
     report_issue: "ಸಮಸ್ಯೆ ವರದಿ ಮಾಡಿ",
-    track_complaint: "ದೂರು ಟ್ರ್ಯಾಕ್ ಮಾಡಿ",
+    track_complaint: "ದೂರು ಪರಿಶೀಲನೆ",
     announcements: "ಪ್ರಕಟಣೆಗಳು",
-    admin_login: "ಅಡ್ಮಿನ್ ಲಾಗಿನ್",
-    admin_dashboard: "ಅಡ್ಮಿನ್ ಡ್ಯಾಶ್‌ಬೋರ್ಡ್",
+    login: "ಲಾಗಿನ್",
+    register: "ನೋಂದಣಿ",
+    dashboard: "ನನ್ನ ಡ್ಯಾಶ್‌ಬೋರ್ಡ್",
     logout: "ನಿರ್ಗಮಿಸಿ",
 
     // Hero
@@ -131,30 +117,16 @@ const TRANSLATIONS = {
     feat_road_2: "ಗುಂಡಿ ಬಿದ್ದ ರಸ್ತೆಗಳ ಫೋಟೋ ಸಹಿತ ವರದಿ",
     feat_road_3: "ರಾತ್ರಿ ದುರಸ್ತಿ ಮತ್ತು ಬದಲಿ ಮಾರ್ಗ ಮಾಹಿತಿ",
 
-    // Tracking & Reporting
+    // Reporting Form
     complaint_form_title: "ಸಾರ್ವಜನಿಕ ಸಮಸ್ಯೆ ದೂರು ನಮೂನೆ",
     form_category: "ಸೇವಾ ವರ್ಗ",
     form_title: "ದೂರಿನ ಶೀರ್ಷಿಕೆ / ಸಾರಾಂಶ",
     form_desc: "ಸಮಸ್ಯೆಯ ವಿವರಣೆ",
     form_location: "ಸ್ಥಳ / ರಸ್ತೆ / ಪ್ರಮುಖ ಗುರುತು",
-    form_photo: "ಫೋಟೋ ಲಗತ್ತಿಸಿ (ಐಚ್ಛಿಕ)",
+    form_photo: "ಛಾಯಾಚಿತ್ರ (ಕ್ಯಾಮೆರಾ ಅಥವಾ ಅಪ್‌ಲೋಡ್)",
     form_submit: "ದೂರು ಸಲ್ಲಿಸಿ ಮತ್ತು ಟ್ರ್ಯಾಕಿಂಗ್ ಐಡಿ ಪಡೆಯಿರಿ",
     ai_suggested: "AI ಶಿಫಾರಸು ಮಾಡಿದ ವರ್ಗ:",
     click_to_apply: "ಆಯ್ಕೆ ಮಾಡಲು ಕ್ಲಿಕ್ ಮಾಡಿ",
-
-    // Statuses
-    status_submitted: "ಸಲ್ಲಿಸಲಾಗಿದೆ",
-    status_under_review: "ಪರಿಶೀಲನೆಯಲ್ಲಿದೆ",
-    status_assigned: "ನಿಯೋಜಿಸಲಾಗಿದೆ",
-    status_in_progress: "ಪ್ರಗತಿಯಲ್ಲಿದೆ",
-    status_resolved: "ಪರಿಹರಿಸಲಾಗಿದೆ",
-    status_rejected: "ತಿರಸ್ಕರಿಸಲಾಗಿದೆ",
-
-    // Quick Stats
-    stat_total_reports: "ಸ್ವೀಕರಿಸಲಾದ ಒಟ್ಟು ದೂರುಗಳು",
-    stat_resolved: "ಪರಿಹರಿಸಲಾದ ಸಮಸ್ಯೆಗಳು",
-    stat_facilities: "ಸಕ್ರಿಯ ನಾಗರಿಕ ಸೌಲಭ್ಯಗಳು",
-    stat_satisfaction: "ದೂರು ಪರಿಹಾರ ದರ",
 
     // Footer
     emergency_title: "ತುರ್ತು ಸಹಾಯವಾಣಿಗಳು",
@@ -165,16 +137,13 @@ const TRANSLATIONS = {
   }
 };
 
-// Current active language
 let currentLang = localStorage.getItem('scc_language') || 'en';
 
 function applyLanguage(lang) {
   currentLang = lang;
   localStorage.setItem('scc_language', lang);
-  
   const dict = TRANSLATIONS[lang] || TRANSLATIONS.en;
-  
-  // Translate all elements with data-i18n attribute
+
   document.querySelectorAll('[data-i18n]').forEach(el => {
     const key = el.getAttribute('data-i18n');
     if (dict[key]) {
@@ -186,11 +155,10 @@ function applyLanguage(lang) {
     }
   });
 
-  // Update language toggle button label
   const toggleBtn = document.getElementById('lang-toggle-btn');
   if (toggleBtn) {
-    toggleBtn.innerHTML = lang === 'en' 
-      ? '<i class="fa-solid fa-language me-1"></i> ಕನ್ನಡ' 
+    toggleBtn.innerHTML = lang === 'en'
+      ? '<i class="fa-solid fa-language me-1"></i> ಕನ್ನಡ'
       : '<i class="fa-solid fa-language me-1"></i> English';
   }
 }
@@ -200,7 +168,7 @@ function toggleLanguage() {
   applyLanguage(nextLang);
 }
 
-// --- 2. REAL-TIME AI COMPLAINT CATEGORIZATION ---
+// Real-time AI Categorization
 let typingTimer;
 function setupAICategorization() {
   const descInput = document.getElementById('complaint-description');
@@ -211,11 +179,10 @@ function setupAICategorization() {
 
   if (!descInput || !aiBadge) return;
 
-  function checkPrediction() {
+  function runPrediction() {
     clearTimeout(typingTimer);
-    const combinedText = ((titleInput ? titleInput.value : '') + ' ' + descInput.value).trim();
-
-    if (combinedText.length < 8) {
+    const combined = ((titleInput ? titleInput.value : '') + ' ' + descInput.value).trim();
+    if (combined.length < 8) {
       if (aiContainer) aiContainer.style.display = 'none';
       return;
     }
@@ -224,7 +191,7 @@ function setupAICategorization() {
       fetch('/api/predict-category', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: combinedText })
+        body: JSON.stringify({ text: combined })
       })
       .then(res => res.json())
       .then(data => {
@@ -232,88 +199,48 @@ function setupAICategorization() {
           if (aiContainer) aiContainer.style.display = 'flex';
           const icon = data.category === 'Waste Management' ? '🗑️' : (data.category === 'Hospital Services' ? '🏥' : '🛣️');
           aiBadge.innerHTML = `<strong>${icon} ${data.category}</strong> <span class="badge bg-primary ms-1">${data.confidence}% match</span>`;
-          
-          // Clicking the suggestion applies it to the select box
           if (categorySelect) {
             aiContainer.onclick = function() {
               categorySelect.value = data.category;
-              aiBadge.classList.add('animate__animated', 'animate__pulse');
             };
           }
         }
       })
-      .catch(err => console.log('AI prediction call error:', err));
-    }, 400); // 400ms debounce
+      .catch(err => console.log('AI prediction fetch error:', err));
+    }, 350);
   }
 
-  descInput.addEventListener('input', checkPrediction);
-  if (titleInput) titleInput.addEventListener('input', checkPrediction);
+  descInput.addEventListener('input', runPrediction);
+  if (titleInput) titleInput.addEventListener('input', runPrediction);
 }
 
-// --- 3. PHOTO PREVIEW ---
-function setupImagePreview() {
-  const imageInput = document.getElementById('complaint-image');
+// Manual File Input Preview
+function setupManualFilePreview() {
+  const manualFile = document.getElementById('complaint-image');
   const previewBox = document.getElementById('image-preview-container');
   const previewImg = document.getElementById('image-preview');
+  const badge = document.getElementById('photo-evidence-badge');
 
-  if (imageInput && previewBox && previewImg) {
-    imageInput.addEventListener('change', function(e) {
+  if (manualFile && previewBox && previewImg) {
+    manualFile.addEventListener('change', function(e) {
       const file = e.target.files[0];
       if (file) {
         const reader = new FileReader();
         reader.onload = function(evt) {
           previewImg.src = evt.target.result;
           previewBox.style.display = 'block';
+          if (badge) {
+            badge.innerHTML = '<span class="badge bg-secondary"><i class="fa-solid fa-file-arrow-up me-1"></i> Uploaded Photo Attached</span>';
+          }
         };
         reader.readAsDataURL(file);
-      } else {
-        previewBox.style.display = 'none';
       }
     });
   }
 }
 
-// --- 4. GEOLOCATION GPS BUTTON ---
-function setupGPSLocator() {
-  const gpsBtn = document.getElementById('btn-get-location');
-  const locInput = document.getElementById('complaint-location');
-  const latInput = document.getElementById('complaint-lat');
-  const lngInput = document.getElementById('complaint-lng');
-
-  if (gpsBtn && locInput) {
-    gpsBtn.addEventListener('click', function() {
-      if (!navigator.geolocation) {
-        alert('Geolocation is not supported by your browser.');
-        return;
-      }
-      gpsBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Locating...';
-      gpsBtn.disabled = true;
-
-      navigator.geolocation.getCurrentPosition(
-        function(pos) {
-          const lat = pos.coords.latitude.toFixed(6);
-          const lng = pos.coords.longitude.toFixed(6);
-          if (latInput) latInput.value = lat;
-          if (lngInput) lngInput.value = lng;
-          locInput.value = `GPS Location: Lat ${lat}, Lng ${lng} (Bengaluru)`;
-          gpsBtn.innerHTML = '<i class="fa-solid fa-check text-success me-1"></i> Located';
-          gpsBtn.disabled = false;
-        },
-        function(err) {
-          gpsBtn.innerHTML = '<i class="fa-solid fa-location-crosshairs me-1"></i> Auto-Detect';
-          gpsBtn.disabled = false;
-          alert('Could not fetch exact GPS location: ' + err.message);
-        },
-        { timeout: 8000 }
-      );
-    });
-  }
-}
-
-// Initialize on DOM Ready
 document.addEventListener('DOMContentLoaded', function() {
   applyLanguage(currentLang);
   setupAICategorization();
-  setupImagePreview();
-  setupGPSLocator();
+  setupManualFilePreview();
 });

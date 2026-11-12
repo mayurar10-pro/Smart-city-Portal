@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+
+{% block title %}Authority Portal Access – SmartCity Connect{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-md-6 col-lg-5">
+      <div class="card border-0 shadow-lg rounded-4 overflow-hidden">
+        <div class="p-4 text-center text-white" style="background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%);">
+          <span class="fs-1 d-block mb-2">🛡️</span>
+          <h4 class="fw-bold mb-1">Municipal Authority Access</h4>
+          <p class="small text-white-50 mb-0">Authorized Municipal Personnel & Ward Engineers Only</p>
+        </div>
+
+        <div class="card-body p-4 p-md-5 bg-white">
+          <form action="{{ url_for('authority_login') }}" method="POST">
+            <div class="mb-3">
+              <label class="form-label fw-semibold">Authority Username</label>
+              <div class="input-group">
+                <span class="input-group-text bg-light border-end-0"><i class="fa-solid fa-user-shield text-muted"></i></span>
+                <input type="text" name="username" class="form-control border-start-0" value="officer_admin" required placeholder="Enter authority username">
+              </div>
+            </div>
+
+            <div class="mb-4">
+              <label class="form-label fw-semibold">Secure Password</label>
+              <div class="input-group">
+                <span class="input-group-text bg-light border-end-0"><i class="fa-solid fa-lock text-muted"></i></span>
+                <input type="password" name="password" class="form-control border-start-0" value="AuthorityPass@2026" required placeholder="Enter authority password">
+              </div>
+            </div>
+
+            <div class="d-grid gap-2 mb-3">
+              <button type="submit" class="btn btn-dark btn-lg fw-bold shadow-sm">
+                <i class="fa-solid fa-shield-halved me-2"></i> Sign In to Authority Console
+              </button>
+            </div>
+          </form>
+
+          <!-- Pre-seeded Authority Helper Alert -->
+          <div class="alert alert-warning border-0 shadow-sm mt-3 mb-0 small rounded-3">
+            <i class="fa-solid fa-key me-1"></i> <strong>Pre-configured Authority Credentials:</strong><br>
+            Username: <code class="fw-bold">officer_admin</code> | Password: <code class="fw-bold">AuthorityPass@2026</code>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

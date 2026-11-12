@@ -7,14 +7,14 @@
 <section class="hero-section text-center">
   <div class="container position-relative" style="z-index: 2;">
     <div class="badge bg-primary-subtle text-primary border border-primary-subtle px-3 py-2 rounded-pill mb-3 fw-bold">
-      <span class="pulse-badge me-2"></span> Smart City Digital Infrastructure Portal
+      <span class="pulse-badge me-2"></span> Smart City Digital Civic Infrastructure
     </div>
     
     <h1 class="display-5 fw-bold mb-3 text-white" data-i18n="hero_title">
       Empowering Citizens, Connecting Civic Services
     </h1>
     <p class="lead text-white-50 mx-auto mb-4" style="max-width: 750px;" data-i18n="hero_desc">
-      A unified smart city platform for city cleanliness, verified healthcare facilities, and smooth road infrastructure.
+      A unified smart city platform for waste management, verified healthcare, and road infrastructure.
     </p>
 
     <!-- Global Search Bar -->
@@ -27,14 +27,20 @@
       </form>
     </div>
 
-    <!-- Quick Action Buttons: Report an Issue & Track Complaint -->
+    <!-- Quick Action Buttons -->
     <div class="d-flex justify-content-center gap-3 mt-4 flex-wrap">
       <a href="{{ url_for('report_issue') }}" class="btn btn-warning px-4 py-2 fw-bold shadow-sm d-flex align-items-center">
-        <i class="fa-solid fa-circle-exclamation fs-5 me-2"></i> <span data-i18n="report_issue">Report an Issue</span>
+        <i class="fa-solid fa-camera fs-5 me-2"></i> <span data-i18n="report_issue">Report an Issue</span>
       </a>
-      <a href="{{ url_for('track_issue') }}" class="btn btn-outline-light px-4 py-2 fw-semibold shadow-sm d-flex align-items-center">
-        <i class="fa-solid fa-magnifying-glass-location fs-5 me-2"></i> <span data-i18n="track_complaint">Track Complaint</span>
+      {% if current_user.is_authenticated and session.get('user_type') == 'citizen' %}
+      <a href="{{ url_for('citizen_dashboard') }}" class="btn btn-outline-light px-4 py-2 fw-semibold shadow-sm d-flex align-items-center">
+        <i class="fa-solid fa-gauge-high fs-5 me-2"></i> <span data-i18n="dashboard">My Citizen Dashboard</span>
       </a>
+      {% else %}
+      <a href="{{ url_for('login') }}" class="btn btn-outline-light px-4 py-2 fw-semibold shadow-sm d-flex align-items-center">
+        <i class="fa-solid fa-right-to-bracket fs-5 me-2"></i> <span data-i18n="login">Citizen Login</span>
+      </a>
+      {% endif %}
     </div>
   </div>
 </section>
@@ -67,7 +73,7 @@
             <li><i class="fa-solid fa-check text-success"></i> <span data-i18n="feat_waste_1">Waste collection schedules & routes</span></li>
             <li><i class="fa-solid fa-check text-success"></i> <span data-i18n="feat_waste_2">Segregation points & bio-compost centers</span></li>
             <li><i class="fa-solid fa-check text-success"></i> <span data-i18n="feat_waste_3">Garbage overflow & cleanup reports</span></li>
-            <li><i class="fa-solid fa-check text-success"></i> <span>Uncollected garbage complaint tracking</span></li>
+            <li><i class="fa-solid fa-check text-success"></i> <span>GPS-based waste complaint reporting</span></li>
           </ul>
 
           <div class="pt-3 border-top mt-auto d-flex justify-content-between align-items-center">
@@ -97,7 +103,7 @@
             <li><i class="fa-solid fa-check text-danger"></i> <span data-i18n="feat_hosp_1">24/7 Verified Emergency & Trauma care</span></li>
             <li><i class="fa-solid fa-check text-danger"></i> <span data-i18n="feat_hosp_2">Nearby hospital locator & directions</span></li>
             <li><i class="fa-solid fa-check text-danger"></i> <span data-i18n="feat_hosp_3">OPD hours & blood bank availability</span></li>
-            <li><i class="fa-solid fa-check text-danger"></i> <span>Hospital information updates & grievance desk</span></li>
+            <li><i class="fa-solid fa-check text-danger"></i> <span>Hospital information updates & directory</span></li>
           </ul>
 
           <div class="pt-3 border-top mt-auto d-flex justify-content-between align-items-center">
@@ -127,7 +133,7 @@
             <li><i class="fa-solid fa-check text-warning"></i> <span data-i18n="feat_road_1">Live road surface condition alerts</span></li>
             <li><i class="fa-solid fa-check text-warning"></i> <span data-i18n="feat_road_2">Damaged road & pothole geotagging</span></li>
             <li><i class="fa-solid fa-check text-warning"></i> <span data-i18n="feat_road_3">Night maintenance & detour notices</span></li>
-            <li><i class="fa-solid fa-check text-warning"></i> <span>Road repair updates and issue resolution</span></li>
+            <li><i class="fa-solid fa-check text-warning"></i> <span>48-Hour rapid pothole patching program</span></li>
           </ul>
 
           <div class="pt-3 border-top mt-auto d-flex justify-content-between align-items-center">
@@ -163,7 +169,7 @@
       <div class="col-lg-3 col-sm-6">
         <div class="stat-card">
           <div class="stat-number text-warning">{{ analytics.pending }}</div>
-          <div class="text-muted fw-semibold small">Active / Under Progress</div>
+          <div class="text-muted fw-semibold small">Active / In Progress</div>
         </div>
       </div>
       <div class="col-lg-3 col-sm-6">
@@ -199,10 +205,10 @@
             <span class="badge {% if ann.category == 'Waste Management' %}badge-waste{% elif ann.category == 'Hospital Services' %}badge-hospital{% elif ann.category == 'Road Management' %}badge-road{% else %}bg-secondary{% endif %}">
               {{ ann.category }}
             </span>
-            <small class="text-muted">{{ ann.created_at[:10] }}</small>
+            <small class="text-muted">{{ ann.created_at.strftime('%Y-%m-%d') }}</small>
           </div>
           <h6 class="fw-bold mb-1">{{ ann.title }}</h6>
-          <p class="text-muted small mb-0">{{ ann.content }}</p>
+          <p class="text-muted small mb-0">{{ ann.description }}</p>
         </div>
       </div>
       {% endfor %}
@@ -218,7 +224,7 @@
         <h3 class="fw-bold mb-0" data-i18n="city_map">Interactive City Facilities Map</h3>
         <p class="text-muted small mb-0">Locate waste centers, hospitals with emergency services, and road maintenance zones.</p>
       </div>
-      <div class="d-flex gap-2">
+      <div>
         <a href="{{ url_for('map_view') }}" class="btn btn-primary btn-sm">
           <i class="fa-solid fa-expand me-1"></i> Open Fullscreen Map
         </a>
@@ -228,38 +234,18 @@
     <div id="home-map" style="height: 380px; border-radius: 14px; border: 1px solid #cbd5e1; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);"></div>
   </div>
 </section>
-
-<!-- 6. Call to Action / How It Works -->
-<section class="py-5 bg-primary text-white text-center">
-  <div class="container">
-    <h2 class="fw-bold mb-3">Notice a Civic Problem in Your Neighborhood?</h2>
-    <p class="lead text-white-50 mx-auto mb-4" style="max-width: 600px;">
-      Report uncollected waste, medical service issues, or road potholes in less than two minutes. Track transparently until resolution.
-    </p>
-    <div class="d-flex justify-content-center gap-3 flex-wrap">
-      <a href="{{ url_for('report_issue') }}" class="btn btn-light btn-lg text-primary fw-bold px-4">
-        <i class="fa-solid fa-pen-to-square me-2"></i> Report an Issue
-      </a>
-      <a href="{{ url_for('track_issue') }}" class="btn btn-outline-light btn-lg fw-semibold px-4">
-        <i class="fa-solid fa-magnifying-glass me-2"></i> Track Complaint Status
-      </a>
-    </div>
-  </div>
-</section>
 {% endblock %}
 
 {% block extra_js %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-  // Initialize Mini Map for Homepage
   const mapElem = document.getElementById('home-map');
-  if (mapElem) {
+  if (mapElem && typeof L !== 'undefined') {
     const map = L.map('home-map').setView([12.9716, 77.5946], 12);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '© OpenStreetMap contributors'
     }).addTo(map);
 
-    // Fetch facilities
     fetch('/api/facilities')
       .then(res => res.json())
       .then(facilities => {
@@ -284,10 +270,10 @@ document.addEventListener('DOMContentLoaded', function() {
           const popupContent = `
             <div style="min-width:200px;">
               <span class="badge bg-light text-dark border mb-1">${fac.category}</span>
-              <h6 class="fw-bold mb-1">${fac.name}</h6>
+              <h6 class="fw-bold mb-1">${fac.service_name}</h6>
               <p class="small text-muted mb-1">${fac.address}</p>
-              <div class="small fw-semibold text-primary"><i class="fa-solid fa-phone me-1"></i> ${fac.contact_number || 'N/A'}</div>
-              <div class="small text-success mt-1"><i class="fa-regular fa-clock me-1"></i> ${fac.operating_hours}</div>
+              <div class="small fw-semibold text-primary"><i class="fa-solid fa-phone me-1"></i> ${fac.contact || 'N/A'}</div>
+              <div class="small text-success mt-1"><i class="fa-regular fa-clock me-1"></i> ${fac.operating_hours || 'Regular'}</div>
             </div>
           `;
 
@@ -296,7 +282,7 @@ document.addEventListener('DOMContentLoaded', function() {
             .addTo(map);
         });
       })
-      .catch(err => console.log('Error loading map facilities:', err));
+      .catch(err => console.log('Error loading preview facilities:', err));
   }
 });
 </script>

@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+
+{% block title %}Citizen Login – SmartCity Connect{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-md-6 col-lg-5">
+      <div class="card border-0 shadow-lg rounded-4 overflow-hidden">
+        <div class="p-4 text-center text-white" style="background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%);">
+          <span class="fs-1 d-block mb-2">🔐</span>
+          <h4 class="fw-bold mb-1" data-i18n="login">Citizen Portal Login</h4>
+          <p class="small text-white-50 mb-0">Sign in with your registered mobile number to manage your complaints.</p>
+        </div>
+
+        <div class="card-body p-4 p-md-5 bg-white">
+          <form action="{{ url_for('login') }}" method="POST">
+            <!-- Mobile Number -->
+            <div class="mb-3">
+              <label class="form-label fw-semibold">Mobile Number</label>
+              <div class="input-group">
+                <span class="input-group-text bg-light border-end-0"><i class="fa-solid fa-phone text-muted"></i> +91</span>
+                <input type="tel" name="mobile_number" class="form-control border-start-0" pattern="[0-9]{10}" placeholder="10-digit mobile number" value="9876543210" required>
+              </div>
+            </div>
+
+            <!-- Password -->
+            <div class="mb-4">
+              <label class="form-label fw-semibold">Password</label>
+              <div class="input-group">
+                <span class="input-group-text bg-light border-end-0"><i class="fa-solid fa-lock text-muted"></i></span>
+                <input type="password" name="password" class="form-control border-start-0" placeholder="Enter your password" value="CitizenPass@2026" required>
+              </div>
+            </div>
+
+            <div class="d-grid gap-2 mb-3">
+              <button type="submit" class="btn btn-primary btn-lg fw-bold shadow-sm">
+                <i class="fa-solid fa-arrow-right-to-bracket me-1"></i> Sign In to My Dashboard
+              </button>
+            </div>
+
+            <!-- Demo Credentials Helper -->
+            <div class="alert alert-info border-0 shadow-sm p-3 mb-3 small rounded-3">
+              <i class="fa-solid fa-key text-primary me-1"></i> <strong>Pre-seeded Demo Citizen Account:</strong><br>
+              Mobile: <code class="fw-bold">9876543210</code> | Password: <code class="fw-bold">CitizenPass@2026</code>
+            </div>
+
+            <div class="text-center small text-muted">
+              Don't have an account yet? <a href="{{ url_for('register') }}" class="text-primary fw-bold">Register as a New Citizen</a>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

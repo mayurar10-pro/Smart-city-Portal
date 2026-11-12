@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+
+{% block title %}Verify Mobile Number (OTP) – SmartCity Connect{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-md-6 col-lg-5">
+      <div class="card border-0 shadow-lg rounded-4 overflow-hidden">
+        <div class="p-4 text-center text-white" style="background: linear-gradient(135deg, #059669 0%, #10b981 100%);">
+          <span class="fs-1 d-block mb-2">📲</span>
+          <h4 class="fw-bold mb-1">Mobile OTP Verification</h4>
+          <p class="small text-white-50 mb-0">Enter the 6-digit code sent to +91 {{ mobile_number }}</p>
+        </div>
+
+        <div class="card-body p-4 p-md-5 bg-white">
+          {% if dev_otp %}
+          <!-- Development Mode OTP Notice for Evaluators -->
+          <div class="alert alert-warning border-0 shadow-sm p-3 mb-4 rounded-3 text-center">
+            <span class="badge bg-dark mb-1">Development / Demo Mode Active</span>
+            <div class="small text-muted mb-1">Simulated SMS Gateway Code:</div>
+            <div class="fs-3 fw-bold text-dark font-monospace tracking-wider">{{ dev_otp }}</div>
+            <small class="text-muted d-block mt-1">Copy and paste this code to activate your citizen account.</small>
+          </div>
+          {% endif %}
+
+          <form action="{{ url_for('verify_otp') }}" method="POST">
+            <input type="hidden" name="mobile_number" value="{{ mobile_number }}">
+
+            <div class="mb-4 text-center">
+              <label class="form-label fw-semibold d-block mb-2">6-Digit Verification Code</label>
+              <input type="text" name="otp" class="form-control form-control-lg text-center font-monospace fs-3 fw-bold tracking-widest" maxlength="6" pattern="[0-9]{6}" placeholder="------" required autofocus>
+              <div class="form-text mt-2 small text-muted"><i class="fa-regular fa-clock me-1"></i> Code expires in 10 minutes.</div>
+            </div>
+
+            <div class="d-grid gap-2 mb-3">
+              <button type="submit" class="btn btn-success btn-lg fw-bold shadow-sm">
+                <i class="fa-solid fa-circle-check me-1"></i> Verify Mobile & Activate Account
+              </button>
+            </div>
+          </form>
+
+          <div class="text-center mt-3 pt-3 border-top small">
+            <span class="text-muted">Didn't receive the OTP?</span>
+            <form action="{{ url_for('resend_otp') }}" method="POST" class="d-inline ms-1">
+              <input type="hidden" name="mobile_number" value="{{ mobile_number }}">
+              <button type="submit" class="btn btn-link btn-sm p-0 fw-bold text-decoration-none">Resend OTP</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

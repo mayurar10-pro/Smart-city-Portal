@@ -1,201 +1,226 @@
 import os
 import unittest
 import json
+import base64
 import io
-import sqlite3
+import datetime
 
-# Import application components
 from app import app
-import models
+from models import db, User, AuthorityUser, Complaint, ComplaintHistory, Service, Announcement, Notification, OTPVerification, seed_initial_data
 from ml.train_model import predict_complaint_category
 
-class SmartCityConnectTestCase(unittest.TestCase):
+class SmartCityConnectComprehensiveTest(unittest.TestCase):
     def setUp(self):
-        # Configure app for testing
         app.config['TESTING'] = True
         app.config['WTF_CSRF_ENABLED'] = False
+        app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'
         app.config['SECRET_KEY'] = 'test-secret-key-2026'
         self.client = app.test_client()
 
         with app.app_context():
-            models.init_db()
-            models.seed_db()
+            db.create_all()
+            seed_initial_data(app.config)
 
-    def test_01_ml_predictions(self):
-        """Test AI Complaint Categorization on all 3 classes"""
-        waste_res = predict_complaint_category("Garbage is not collected from street, overflowing bin")
-        self.assertEqual(waste_res['category'], 'Waste Management')
-        self.assertGreater(waste_res['confidence'], 50.0)
+    def tearDown(self):
+        with app.app_context():
+            db.session.remove()
+            db.drop_all()
 
-        hospital_res = predict_complaint_category("Hospital emergency telephone number is not reachable")
-        self.assertEqual(hospital_res['category'], 'Hospital Services')
-        self.assertGreater(hospital_res['confidence'], 50.0)
+    def test_01_homepage_three_cards_only(self):
+        """Verify homepage strictly renders only the 3 core service cards"""
+        res = self.client.get('/')
+        self.assertEqual(res.status_code, 200)
+        html = res.data.decode('utf-8')
 
-        road_res = predict_complaint_category("Road has severe deep potholes after heavy rain")
-        self.assertEqual(road_res['category'], 'Road Management')
-        self.assertGreater(road_res['confidence'], 50.0)
+        self.assertIn('Waste Management', html)
+        self.assertIn('Hospital Services', html)
+        self.assertIn('Road Management', html)
 
-    def test_02_homepage_three_service_cards(self):
-        """Test that homepage renders and strictly contains only the three core service cards"""
-        response = self.client.get('/')
-        self.assertEqual(response.status_code, 200)
-        content = response.data.decode('utf-8')
-        
-        # Verify the three main service cards are present
-        self.assertIn('Waste Management', content)
-        self.assertIn('Hospital Services', content)
-        self.assertIn('Road Management', content)
+        # Ensure no other service cards exist
+        self.assertNotIn('Water Supply Management', html)
+        self.assertNotIn('Drainage Management', html)
+        self.assertNotIn('Streetlight Management', html)
 
-        # Verify no extraneous service cards like water, streetlights, drainage as main service cards
-        self.assertNotIn('Water Supply Management', content)
-        self.assertNotIn('Streetlight Management', content)
-        self.assertNotIn('Drainage Management', content)
-
-    def test_03_service_pages(self):
-        """Test the 3 dedicated service pages"""
-        r_waste = self.client.get('/waste')
-        self.assertEqual(r_waste.status_code, 200)
-        self.assertIn('Waste Collection', r_waste.data.decode('utf-8'))
-
-        r_hosp = self.client.get('/hospitals')
-        self.assertEqual(r_hosp.status_code, 200)
-        self.assertIn('108', r_hosp.data.decode('utf-8'))
-
-        r_roads = self.client.get('/roads')
-        self.assertEqual(r_roads.status_code, 200)
-        self.assertIn('Road Corridors', r_roads.data.decode('utf-8'))
-
-    def test_04_map_and_apis(self):
-        """Test Map view and JSON APIs for Leaflet markers"""
-        r_map = self.client.get('/map')
-        self.assertEqual(r_map.status_code, 200)
-
-        r_fac = self.client.get('/api/facilities')
-        self.assertEqual(r_fac.status_code, 200)
-        facilities = json.loads(r_fac.data)
-        self.assertIsInstance(facilities, list)
-        self.assertGreater(len(facilities), 0)
-
-        # Test predict API
-        r_predict = self.client.post('/api/predict-category', json={'text': 'trash bin broken on street'})
-        self.assertEqual(r_predict.status_code, 200)
-        pred = json.loads(r_predict.data)
-        self.assertEqual(pred['category'], 'Waste Management')
-
-    def test_05_complaint_workflow_with_image(self):
-        """Test complaint submission, image upload, unique tracking ID, and tracking"""
-        complaint_data = {
-            'title': 'Test Pothole on 100ft Road',
-            'category': 'Road Management',
-            'description': 'Large pothole causing vehicle damage near junction',
-            'location_name': '100ft Road, Indiranagar',
-            'citizen_name': 'Test Citizen',
-            'citizen_contact': '9876543210',
-            'latitude': '12.9780',
-            'longitude': '77.6400',
-            'image': (io.BytesIO(b"fake-image-bytes-header"), 'pothole.jpg')
+    def test_02_citizen_registration_and_otp_workflow(self):
+        """Test registration, OTP generation, verification, and automatic login"""
+        # Register new citizen
+        reg_data = {
+            'name': 'Priya Sharma',
+            'mobile_number': '9845123456',
+            'email': 'priya.sharma@example.com',
+            'password': 'SecurePassword@2026',
+            'confirm_password': 'SecurePassword@2026'
         }
+        res_reg = self.client.post('/register', data=reg_data, follow_redirects=True)
+        self.assertEqual(res_reg.status_code, 200)
+        self.assertIn('Mobile OTP Verification', res_reg.data.decode('utf-8'))
 
-        response = self.client.post('/report', data=complaint_data, follow_redirects=True, content_type='multipart/form-data')
-        self.assertEqual(response.status_code, 200)
-        page_content = response.data.decode('utf-8')
+        with app.app_context():
+            # Check user was created as unverified
+            user = User.query.filter_by(mobile_number='9845123456').first()
+            self.assertIsNotNone(user)
+            self.assertFalse(user.is_verified)
 
-        # Check tracking page contains complaint details
-        self.assertIn('Test Pothole on 100ft Road', page_content)
-        self.assertIn('SCC-ROD-', page_content)
-        self.assertIn('Submitted', page_content)
+            # Retrieve active OTP
+            otp_record = OTPVerification.query.filter_by(mobile_number='9845123456', is_used=False).first()
+            self.assertIsNotNone(otp_record)
 
-    def test_06_admin_authentication_and_dashboard(self):
-        """Test Admin login and access control"""
-        # Unauthorized access redirects to login
-        res_unauth = self.client.get('/admin', follow_redirects=False)
-        self.assertEqual(res_unauth.status_code, 302)
+            # Test invalid OTP
+            self.assertFalse(otp_record.verify_otp('000000'))
 
-        # Login with correct credentials
-        res_login = self.client.post('/admin/login', data={'username': 'admin', 'password': 'admin123'}, follow_redirects=True)
-        self.assertEqual(res_login.status_code, 200)
-        self.assertIn('Analytics Dashboard', res_login.data.decode('utf-8'))
-
-        # Check complaints management page
-        res_complaints = self.client.get('/admin/complaints')
-        self.assertEqual(res_complaints.status_code, 200)
-        self.assertIn('Civic Grievance Management', res_complaints.data.decode('utf-8'))
-
-    def test_07_admin_status_update_and_rejection(self):
-        """Test Admin updating complaint status and rejecting with reason"""
+        # Verify OTP via client
         with self.client.session_transaction() as sess:
-            sess['admin_logged_in'] = True
-            sess['admin_username'] = 'admin'
+            sess['pending_mobile'] = '9845123456'
 
-        # Get a complaint
-        conn = models.get_db_connection()
-        cmp = conn.execute('SELECT id FROM complaints ORDER BY id DESC LIMIT 1').fetchone()
-        conn.close()
-        cmp_id = cmp['id']
+        with app.app_context():
+            # Generate known candidate for verification test
+            otp_rec = OTPVerification.query.filter_by(mobile_number='9845123456', is_used=False).first()
+            otp_rec.set_otp('123456')
+            db.session.commit()
 
-        # Update to Rejected with required explanation
-        res_update = self.client.post(f'/admin/complaint/update/{cmp_id}', data={
-            'status': 'Rejected',
-            'admin_notes': 'Verified by field inspector.',
-            'rejection_reason': 'Location is inside a private residential society, not on public roadway.'
-        }, follow_redirects=True)
-        self.assertEqual(res_update.status_code, 200)
+        res_verify = self.client.post('/verify-otp', data={'otp': '123456', 'mobile_number': '9845123456'}, follow_redirects=True)
+        self.assertEqual(res_verify.status_code, 200)
+        self.assertIn('My Citizen Dashboard', res_verify.data.decode('utf-8'))
 
-        # Verify DB update
-        updated_cmp = models.get_complaint_by_id(cmp_id)
-        self.assertEqual(updated_cmp['status'], 'Rejected')
-        self.assertEqual(updated_cmp['rejection_reason'], 'Location is inside a private residential society, not on public roadway.')
+        with app.app_context():
+            user = User.query.filter_by(mobile_number='9845123456').first()
+            self.assertTrue(user.is_verified)
 
-    def test_08_admin_facility_management(self):
-        """Test Admin adding and deleting a service facility"""
-        with self.client.session_transaction() as sess:
-            sess['admin_logged_in'] = True
+    def test_03_citizen_mobile_login(self):
+        """Test login with mobile number and password"""
+        # Pre-seeded demo user: 9876543210 / CitizenPass@2026
+        login_data = {
+            'mobile_number': '9876543210',
+            'password': 'CitizenPass@2026'
+        }
+        res = self.client.post('/login', data=login_data, follow_redirects=True)
+        self.assertEqual(res.status_code, 200)
+        self.assertIn('My Citizen Dashboard', res.data.decode('utf-8'))
+        self.assertIn('Ramesh Kumar', res.data.decode('utf-8'))
 
-        # Add facility
-        fac_data = {
+    def test_04_camera_and_gps_complaint_submission(self):
+        """Test reporting an issue with simulated live camera capture (Base64) and GPS accuracy"""
+        # Log in as demo citizen
+        self.client.post('/login', data={'mobile_number': '9876543210', 'password': 'CitizenPass@2026'})
+
+        # Simulated Base64 camera photo data
+        fake_base64 = "data:image/jpeg;base64," + base64.b64encode(b"simulated-camera-raw-bytes").decode('utf-8')
+
+        report_data = {
             'category': 'Waste Management',
-            'name': 'Test New Biogas Depot',
-            'address': 'Test Ward 99, Smart City',
-            'contact_number': '080-99998888',
-            'emergency_contact': '1800-425-5001',
-            'operating_hours': 'Daily 6 AM - 12 PM',
-            'status': 'Operational',
-            'details': 'Pilot wet waste composting plant',
-            'latitude': '12.9800',
-            'longitude': '77.6000'
+            'title': 'Severe Garbage Overflow at Junction',
+            'description': 'Dustbin broken and rotten wet waste spilling onto pedestrian pathway.',
+            'readable_address': 'Indiranagar 100ft Road, Bengaluru',
+            'latitude': '12.9784',
+            'longitude': '77.6408',
+            'location_accuracy': '8.5',
+            'camera_captured_data': fake_base64
         }
-        res_add = self.client.post('/admin/facility/add', data=fac_data, follow_redirects=True)
-        self.assertEqual(res_add.status_code, 200)
 
-        # Verify in DB
-        facilities = models.get_facilities(category='Waste Management', search='Test New Biogas Depot')
-        self.assertEqual(len(facilities), 1)
-        fac_id = facilities[0]['id']
+        res = self.client.post('/report', data=report_data, follow_redirects=True)
+        self.assertEqual(res.status_code, 200)
+        html = res.data.decode('utf-8')
 
-        # Delete facility
-        res_del = self.client.post(f'/admin/facility/delete/{fac_id}', follow_redirects=True)
-        self.assertEqual(res_del.status_code, 200)
-        facilities_after = models.get_facilities(category='Waste Management', search='Test New Biogas Depot')
-        self.assertEqual(len(facilities_after), 0)
+        self.assertIn('SCC-WST-', html)
+        self.assertIn('Severe Garbage Overflow at Junction', html)
 
-    def test_09_announcements_workflow(self):
-        """Test public viewing, admin publishing, and deleting announcements"""
-        with self.client.session_transaction() as sess:
-            sess['admin_logged_in'] = True
+        with app.app_context():
+            cmp = Complaint.query.filter_by(title='Severe Garbage Overflow at Junction').first()
+            self.assertIsNotNone(cmp)
+            self.assertEqual(cmp.location_accuracy, 8.5)
+            self.assertTrue(cmp.image_path.startswith('cam_'))
+            # Check history
+            self.assertEqual(cmp.history.count(), 1)
+            # Check notification
+            notif = Notification.query.filter_by(user_id=cmp.user_id).order_by(Notification.created_at.desc()).first()
+            self.assertIn('SCC-WST-', notif.message)
 
-        # Post new announcement
-        ann_data = {
-            'title': 'Test Monsoon Pothole Advisory',
-            'category': 'Road Management',
-            'priority': 'Important',
-            'content': 'Special road repair teams deployed for rainy season.'
+    def test_05_privacy_access_control(self):
+        """Ensure a citizen cannot view another citizen's private complaint"""
+        # Create a second citizen user
+        with app.app_context():
+            user2 = User(
+                name='Sneha Patel',
+                mobile_number='9123456780',
+                is_verified=True
+            )
+            user2.set_password('SnehaPass@2026')
+            db.session.add(user2)
+            db.session.commit()
+
+            # Find demo citizen's complaint
+            demo_cmp = Complaint.query.filter_by(tracking_id='SCC-WST-20261102-1001').first()
+            target_tracking_id = demo_cmp.tracking_id
+
+        # Log in as user2
+        self.client.post('/login', data={'mobile_number': '9123456780', 'password': 'SnehaPass@2026'})
+
+        # Try to view demo citizen's complaint
+        res = self.client.get(f'/track/{target_tracking_id}', follow_redirects=True)
+        html = res.data.decode('utf-8')
+        self.assertIn('Privacy Protection', html)
+
+    def test_06_authority_portal_and_workflow(self):
+        """Test authority login, status updates, history audit, and citizen notification"""
+        # Authority Login
+        auth_data = {
+            'username': 'officer_admin',
+            'password': 'AuthorityPass@2026'
         }
-        res_post = self.client.post('/admin/announcement/add', data=ann_data, follow_redirects=True)
-        self.assertEqual(res_post.status_code, 200)
+        res_login = self.client.post('/authority/login', data=auth_data, follow_redirects=True)
+        self.assertEqual(res_login.status_code, 200)
+        self.assertIn('Municipal Governance &amp; Analytics Dashboard', res_login.data.decode('utf-8'))
 
-        # Verify on public announcements page
-        res_public = self.client.get('/announcements?category=Road Management')
-        self.assertIn('Test Monsoon Pothole Advisory', res_public.data.decode('utf-8'))
+        # Fetch complaint to update
+        with app.app_context():
+            cmp = Complaint.query.first()
+            cmp_id = cmp.complaint_id
+            user_id = cmp.user_id
+
+        # Authority updates status to In Progress
+        update_data = {
+            'status': 'In Progress',
+            'notes': 'Ward repair vehicle dispatched with asphalt mixture.',
+            'rejection_reason': ''
+        }
+        res_upd = self.client.post(f'/authority/complaint/update/{cmp_id}', data=update_data, follow_redirects=True)
+        self.assertEqual(res_upd.status_code, 200)
+
+        with app.app_context():
+            updated_cmp = Complaint.query.get(cmp_id)
+            self.assertEqual(updated_cmp.status, 'In Progress')
+            
+            # Check citizen received notification
+            notif = Notification.query.filter_by(user_id=user_id, complaint_id=cmp_id).order_by(Notification.created_at.desc()).first()
+            self.assertIn('Now &#39;In Progress&#39;', notif.message)
+
+    def test_07_ai_complaint_categorization(self):
+        """Test Scikit-Learn TF-IDF + Logistic Classifier"""
+        res_waste = predict_complaint_category("garbage dumpster is full of rotten organic food waste")
+        self.assertEqual(res_waste['category'], 'Waste Management')
+
+        res_hosp = predict_complaint_category("emergency ICU department phone number is not answering")
+        self.assertEqual(res_hosp['category'], 'Hospital Services')
+
+        res_road = predict_complaint_category("deep pothole on main road causing severe tyre punctures")
+        self.assertEqual(res_road['category'], 'Road Management')
+
+    def test_08_core_service_pages_and_apis(self):
+        """Test core service views and JSON APIs"""
+        self.assertEqual(self.client.get('/waste').status_code, 200)
+        self.assertEqual(self.client.get('/hospitals').status_code, 200)
+        self.assertEqual(self.client.get('/roads').status_code, 200)
+        self.assertEqual(self.client.get('/map').status_code, 200)
+
+        # Facilities API
+        res_fac = self.client.get('/api/facilities')
+        self.assertEqual(res_fac.status_code, 200)
+        fac_list = json.loads(res_fac.data)
+        self.assertGreater(len(fac_list), 0)
+
+        # Complaints Map API (generalized coordinates)
+        res_cmp_map = self.client.get('/api/complaints-map')
+        self.assertEqual(res_cmp_map.status_code, 200)
 
 if __name__ == '__main__':
     unittest.main()

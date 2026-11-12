@@ -4,32 +4,23 @@
 
 {% block content %}
 <div class="bg-primary text-white py-4">
-  <div class="container">
-    <h1 class="h3 fw-bold mb-1"><i class="fa-solid fa-magnifying-glass-location me-2"></i> <span data-i18n="track_complaint">Track Complaint Progress</span></h1>
-    <p class="text-white-50 mb-0">Monitor real-time investigation, officer assignment, and resolution milestones using your unique Tracking ID.</p>
+  <div class="container d-flex justify-content-between align-items-center flex-wrap gap-2">
+    <div>
+      <h1 class="h3 fw-bold mb-1"><i class="fa-solid fa-magnifying-glass-location me-2"></i> Track Complaint Progress</h1>
+      <p class="text-white-50 mb-0">Inspect real-time investigation stages, officer notes, and photographic evidence.</p>
+    </div>
+    {% if current_user.is_authenticated and session.get('user_type') == 'citizen' %}
+    <div>
+      <a href="{{ url_for('citizen_dashboard') }}" class="btn btn-outline-light btn-sm">
+        <i class="fa-solid fa-arrow-left me-1"></i> Back to My Dashboard
+      </a>
+    </div>
+    {% endif %}
   </div>
 </div>
 
 <div class="container py-5">
-  <!-- Search ID Form -->
-  <div class="row justify-content-center mb-5">
-    <div class="col-lg-8">
-      <div class="card shadow-sm border-0 p-3 bg-white">
-        <form method="GET" action="{{ url_for('track_issue') }}" class="d-flex gap-2">
-          <div class="input-group input-group-lg">
-            <span class="input-group-text bg-light border-end-0"><i class="fa-solid fa-ticket text-primary"></i></span>
-            <input type="text" name="tracking_id" value="{{ searched_id or '' }}" class="form-control border-start-0" placeholder="Enter Unique Tracking ID (e.g., SCC-WST-20261101-1001)" required>
-          </div>
-          <button type="submit" class="btn btn-warning px-4 fw-bold">
-            <i class="fa-solid fa-search me-1"></i> Track
-          </button>
-        </form>
-      </div>
-    </div>
-  </div>
-
   {% if complaint %}
-  <!-- Complaint Details and Stepper Card -->
   <div class="row justify-content-center">
     <div class="col-lg-9">
       <div class="card shadow-sm border-0 rounded-4 overflow-hidden mb-4">
@@ -53,7 +44,6 @@
           {% if complaint.status != 'Rejected' %}
           {% set steps = ['Submitted', 'Under Review', 'Assigned', 'In Progress', 'Resolved'] %}
           
-          {# Calculate current step index #}
           {% set current_idx = 0 %}
           {% if complaint.status == 'Submitted' %}{% set current_idx = 0 %}
           {% elif complaint.status == 'Under Review' %}{% set current_idx = 1 %}
@@ -81,43 +71,42 @@
           <div class="alert alert-danger p-4 rounded-3 mb-4">
             <h5 class="fw-bold text-danger"><i class="fa-solid fa-ban me-2"></i> Complaint Status: Rejected</h5>
             <p class="mb-2">This civic grievance was evaluated by municipal administrative review and could not be processed under this category.</p>
-            <div class="p-3 bg-white rounded border border-danger-subtle text-dark">
-              <strong>Official Administrative Reason:</strong> {{ complaint.rejection_reason or 'Complaint details insufficient or outside municipal jurisdiction.' }}
-            </div>
-          </div>
-          {% endif %}
-
-          <!-- Resolution Notes (If present) -->
-          {% if complaint.admin_notes %}
-          <div class="alert alert-success border-0 shadow-sm p-4 rounded-3 mb-4">
-            <h6 class="fw-bold text-success mb-2"><i class="fa-solid fa-clipboard-check me-2"></i> Municipal Action & Resolution Notes</h6>
-            <p class="mb-0 text-dark">{{ complaint.admin_notes }}</p>
+            {% for h in complaint.history.all() %}
+              {% if h.new_status == 'Rejected' and h.notes %}
+              <div class="p-3 bg-white rounded border border-danger-subtle text-dark">
+                <strong>Official Administrative Reason:</strong> {{ h.notes }}
+              </div>
+              {% endif %}
+            {% endfor %}
           </div>
           {% endif %}
 
           <!-- Detailed Information Grid -->
-          <h5 class="fw-bold border-bottom pb-2 mb-3">Report Particulars</h5>
+          <h5 class="fw-bold border-bottom pb-2 mb-3">Grievance Record Particulars</h5>
           <div class="row g-3 mb-4">
             <div class="col-sm-6">
-              <small class="text-muted d-block">Service Category</small>
+              <small class="text-muted d-block">Service Portfolio</small>
               <span class="badge {% if complaint.category == 'Waste Management' %}badge-waste{% elif complaint.category == 'Hospital Services' %}badge-hospital{% else %}badge-road{% endif %} fs-6">
                 {{ complaint.category }}
               </span>
-              {% if complaint.predicted_category %}
-              <small class="text-muted d-block mt-1 font-monospace" style="font-size:0.75rem;">
-                <i class="fa-solid fa-robot text-primary me-1"></i> AI Verification: {{ complaint.predicted_category }} ({{ complaint.confidence }}%)
-              </small>
-              {% endif %}
             </div>
 
             <div class="col-sm-6">
-              <small class="text-muted d-block">Date & Time Logged</small>
-              <strong>{{ complaint.created_at }}</strong>
+              <small class="text-muted d-block">Submission Date & Time</small>
+              <strong>{{ complaint.created_at.strftime('%Y-%m-%d %H:%M:%S UTC') }}</strong>
             </div>
 
             <div class="col-12">
-              <small class="text-muted d-block">Reported Location</small>
-              <strong><i class="fa-solid fa-location-dot text-danger me-1"></i> {{ complaint.location_name }}</strong>
+              <small class="text-muted d-block">Reported Address & Coordinates</small>
+              <strong><i class="fa-solid fa-location-dot text-danger me-1"></i> {{ complaint.readable_address }}</strong>
+              {% if complaint.latitude and complaint.longitude %}
+              <div class="text-muted font-monospace small mt-1">
+                Coordinates: ({{ complaint.latitude }}, {{ complaint.longitude }})
+                {% if complaint.location_accuracy %}
+                &bull; <span class="badge bg-info-subtle text-info-emphasis border border-info-subtle">GPS Accuracy: ±{{ complaint.location_accuracy|round|int }}m</span>
+                {% endif %}
+              </div>
+              {% endif %}
             </div>
 
             <div class="col-12">
@@ -127,25 +116,38 @@
 
             {% if complaint.image_path %}
             <div class="col-12">
-              <small class="text-muted d-block mb-1">Attached Photograph</small>
+              <small class="text-muted d-block mb-1">Attached Supporting Photographic Evidence</small>
               <div class="border rounded p-2 text-center bg-light" style="max-width: 400px;">
                 <a href="{{ url_for('uploaded_file', filename=complaint.image_path) }}" target="_blank">
                   <img src="{{ url_for('uploaded_file', filename=complaint.image_path) }}" alt="Issue Photo" class="img-fluid rounded" style="max-height: 250px;">
                 </a>
-                <small class="text-muted d-block mt-1"><i class="fa-solid fa-arrow-up-right-from-square me-1"></i> Click to view full image</small>
+                <small class="text-muted d-block mt-1"><i class="fa-solid fa-arrow-up-right-from-square me-1"></i> Click photo to view high-resolution image</small>
               </div>
             </div>
             {% endif %}
+          </div>
 
-            <div class="col-sm-6">
-              <small class="text-muted d-block">Complainant Name</small>
-              <span>{{ complaint.citizen_name or 'Anonymous Citizen' }}</span>
-            </div>
-
-            <div class="col-sm-6">
-              <small class="text-muted d-block">Last Status Update</small>
-              <span>{{ complaint.updated_at }}</span>
-            </div>
+          <!-- Status Transition History Audit Trail -->
+          <h5 class="fw-bold border-bottom pb-2 mb-3"><i class="fa-solid fa-clock-rotate-left text-primary me-2"></i> Authority Action & Status Timeline</h5>
+          <div class="timeline mb-4">
+            <ul class="list-group list-group-flush">
+              {% for h in complaint.history.all() %}
+              <li class="list-group-item px-0 py-3">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                  <div>
+                    <span class="status-badge {% if h.new_status == 'Submitted' %}status-submitted{% elif h.new_status == 'Under Review' %}status-under-review{% elif h.new_status == 'Assigned' %}status-assigned{% elif h.new_status == 'In Progress' %}status-in-progress{% elif h.new_status == 'Resolved' %}status-resolved{% else %}status-rejected{% endif %}">
+                      {{ h.new_status }}
+                    </span>
+                    <strong class="ms-2 text-dark">{{ h.updated_by }}</strong>
+                  </div>
+                  <small class="text-muted">{{ h.updated_at.strftime('%d %b %Y, %H:%M') }}</small>
+                </div>
+                <p class="small text-secondary mb-0 ps-1">{{ h.notes or 'Status progression logged by system.' }}</p>
+              </li>
+              {% else %}
+              <li class="list-group-item text-muted small px-0">Initial submission registered.</li>
+              {% endfor %}
+            </ul>
           </div>
 
           <div class="text-center pt-3 border-top">
@@ -158,54 +160,15 @@
       </div>
     </div>
   </div>
-
-  {% elif recent_complaints %}
-  <!-- Transparency: Show recent complaints when landing on track page -->
+  {% else %}
   <div class="row justify-content-center">
-    <div class="col-lg-10">
-      <div class="d-flex justify-content-between align-items-center mb-3">
-        <h5 class="fw-bold mb-0 text-muted"><i class="fa-solid fa-clock-rotate-left me-2"></i> Recent Public Civic Grievances</h5>
-        <span class="badge bg-light text-dark border">Public Transparency Feed</span>
+    <div class="col-md-6 text-center py-5">
+      <div class="alert alert-warning">
+        <i class="fa-solid fa-triangle-exclamation fs-2 mb-2 d-block"></i>
+        <h5>Grievance Not Found or Private</h5>
+        <p class="mb-0">Please check your tracking ID or log into your personal citizen dashboard to view your registered complaints.</p>
       </div>
-
-      <div class="table-responsive bg-white rounded-3 shadow-sm">
-        <table class="table table-hover align-middle mb-0">
-          <thead class="table-light">
-            <tr>
-              <th>Tracking ID</th>
-              <th>Category</th>
-              <th>Title</th>
-              <th>Location</th>
-              <th>Status</th>
-              <th>Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for rc in recent_complaints %}
-            <tr>
-              <td><span class="badge bg-light text-dark border font-monospace">{{ rc.tracking_id }}</span></td>
-              <td>
-                <span class="badge {% if rc.category == 'Waste Management' %}badge-waste{% elif rc.category == 'Hospital Services' %}badge-hospital{% else %}badge-road{% endif %}">
-                  {{ rc.category }}
-                </span>
-              </td>
-              <td class="fw-semibold">{{ rc.title }}</td>
-              <td class="small text-muted">{{ rc.location_name }}</td>
-              <td>
-                <span class="status-badge {% if rc.status == 'Submitted' %}status-submitted{% elif rc.status == 'Under Review' %}status-under-review{% elif rc.status == 'Assigned' %}status-assigned{% elif rc.status == 'In Progress' %}status-in-progress{% elif rc.status == 'Resolved' %}status-resolved{% else %}status-rejected{% endif %}">
-                  {{ rc.status }}
-                </span>
-              </td>
-              <td>
-                <a href="{{ url_for('track_issue', tracking_id=rc.tracking_id) }}" class="btn btn-sm btn-outline-primary">
-                  View <i class="fa-solid fa-arrow-right ms-1"></i>
-                </a>
-              </td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
+      <a href="{{ url_for('login') }}" class="btn btn-primary mt-3">Citizen Sign In</a>
     </div>
   </div>
   {% endif %}

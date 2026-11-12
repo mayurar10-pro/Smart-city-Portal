@@ -1,0 +1,235 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Civic Complaints – SmartCity Connect Authority{% endblock %}
+
+{% block content %}
+<div class="py-4 text-white" style="background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%);">
+  <div class="container d-flex justify-content-between align-items-center flex-wrap gap-2">
+    <div>
+      <h1 class="h3 fw-bold mb-1"><i class="fa-solid fa-list-check me-2"></i> Authority Grievance Processing Console</h1>
+      <p class="mb-0 text-white-50">Inspect verified photographs, review GPS accuracy, verify AI classification, and record municipal actions.</p>
+    </div>
+    <div class="d-flex gap-2">
+      <a href="{{ url_for('authority_dashboard') }}" class="btn btn-outline-light btn-sm">
+        <i class="fa-solid fa-chart-line me-1"></i> Dashboard
+      </a>
+      <a href="{{ url_for('authority_services') }}" class="btn btn-outline-light btn-sm">
+        <i class="fa-solid fa-cubes me-1"></i> Manage Services
+      </a>
+    </div>
+  </div>
+</div>
+
+<div class="container-fluid px-lg-4 py-4">
+  <!-- Search & Filter Controls -->
+  <div class="card border-0 shadow-sm mb-4 p-3 bg-white">
+    <form method="GET" action="{{ url_for('authority_complaints') }}" class="row g-2 align-items-center">
+      <div class="col-md-4">
+        <div class="input-group">
+          <span class="input-group-text bg-light border-end-0"><i class="fa-solid fa-magnifying-glass text-muted"></i></span>
+          <input type="text" name="search" value="{{ search }}" class="form-control border-start-0" placeholder="Search by Tracking ID, keyword, address...">
+        </div>
+      </div>
+
+      <div class="col-md-3">
+        <select name="category" class="form-select">
+          <option value="All" {% if active_category == 'All' %}selected{% endif %}>All Service Portfolios</option>
+          <option value="Waste Management" {% if active_category == 'Waste Management' %}selected{% endif %}>🗑️ Waste Management</option>
+          <option value="Hospital Services" {% if active_category == 'Hospital Services' %}selected{% endif %}>🏥 Hospital Services</option>
+          <option value="Road Management" {% if active_category == 'Road Management' %}selected{% endif %}>🛣️ Road Management</option>
+        </select>
+      </div>
+
+      <div class="col-md-3">
+        <select name="status" class="form-select">
+          <option value="All" {% if active_status == 'All' %}selected{% endif %}>All Complaint Statuses</option>
+          <option value="Submitted" {% if active_status == 'Submitted' %}selected{% endif %}>Submitted</option>
+          <option value="Under Review" {% if active_status == 'Under Review' %}selected{% endif %}>Under Review</option>
+          <option value="Assigned" {% if active_status == 'Assigned' %}selected{% endif %}>Assigned</option>
+          <option value="In Progress" {% if active_status == 'In Progress' %}selected{% endif %}>In Progress</option>
+          <option value="Resolved" {% if active_status == 'Resolved' %}selected{% endif %}>Resolved</option>
+          <option value="Rejected" {% if active_status == 'Rejected' %}selected{% endif %}>Rejected</option>
+        </select>
+      </div>
+
+      <div class="col-md-2 d-flex gap-2">
+        <button type="submit" class="btn btn-primary flex-grow-1 fw-bold">Filter</button>
+        {% if search or active_category != 'All' or active_status != 'All' %}
+        <a href="{{ url_for('authority_complaints') }}" class="btn btn-outline-secondary">Reset</a>
+        {% endif %}
+      </div>
+    </form>
+  </div>
+
+  <!-- Complaints Table -->
+  <div class="card border-0 shadow-sm">
+    <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center">
+      <h6 class="fw-bold mb-0">Total Grievances Found: <span class="badge bg-primary">{{ complaints|length }}</span></h6>
+      <span class="small text-muted"><i class="fa-solid fa-satellite-dish text-success me-1"></i> GPS Coordinates & Evidence Active</span>
+    </div>
+
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>ID</th>
+            <th>Category & AI Prediction</th>
+            <th>Issue Particulars</th>
+            <th>Citizen Profile</th>
+            <th>Location & Accuracy</th>
+            <th>Evidence Photo</th>
+            <th>Status</th>
+            <th>Authority Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for cmp in complaints %}
+          <tr>
+            <td>
+              <span class="badge bg-light text-dark border font-monospace">{{ cmp.tracking_id }}</span>
+              <small class="text-muted d-block" style="font-size: 0.72rem;">{{ cmp.created_at.strftime('%Y-%m-%d %H:%M') }}</small>
+            </td>
+
+            <td>
+              <span class="badge {% if cmp.category == 'Waste Management' %}badge-waste{% elif cmp.category == 'Hospital Services' %}badge-hospital{% else %}badge-road{% endif %} d-block mb-1">
+                {{ cmp.category }}
+              </span>
+            </td>
+
+            <td>
+              <div class="fw-semibold">{{ cmp.title }}</div>
+              <p class="small text-muted mb-0 text-truncate" style="max-width: 250px;" title="{{ cmp.description }}">{{ cmp.description }}</p>
+            </td>
+
+            <td class="small">
+              <div class="fw-semibold">{{ cmp.author.name }}</div>
+              <div class="text-muted"><i class="fa-solid fa-phone me-1"></i> +91 {{ cmp.author.mobile_number }}</div>
+              {% if cmp.author.email %}
+              <div class="text-muted font-monospace" style="font-size: 0.72rem;">{{ cmp.author.email }}</div>
+              {% endif %}
+            </td>
+
+            <td class="small">
+              <div class="text-truncate" style="max-width: 180px;"><i class="fa-solid fa-location-dot text-danger me-1"></i> {{ cmp.readable_address }}</div>
+              {% if cmp.latitude and cmp.longitude %}
+              <div class="text-muted font-monospace" style="font-size: 0.7rem;">Lat: {{ cmp.latitude }}, Lng: {{ cmp.longitude }}</div>
+              {% endif %}
+              {% if cmp.location_accuracy %}
+              <span class="badge bg-info-subtle text-info-emphasis border border-info-subtle" style="font-size:0.68rem;">
+                GPS Accuracy: ±{{ cmp.location_accuracy|round|int }}m
+              </span>
+              {% endif %}
+            </td>
+
+            <td>
+              {% if cmp.image_path %}
+              <a href="{{ url_for('uploaded_file', filename=cmp.image_path) }}" target="_blank">
+                <img src="{{ url_for('uploaded_file', filename=cmp.image_path) }}" alt="Issue" class="img-thumbnail" style="width: 50px; height: 50px; object-fit: cover;">
+              </a>
+              {% else %}
+              <span class="text-muted small">None</span>
+              {% endif %}
+            </td>
+
+            <td>
+              <span class="status-badge {% if cmp.status == 'Submitted' %}status-submitted{% elif cmp.status == 'Under Review' %}status-under-review{% elif cmp.status == 'Assigned' %}status-assigned{% elif cmp.status == 'In Progress' %}status-in-progress{% elif cmp.status == 'Resolved' %}status-resolved{% else %}status-rejected{% endif %}">
+                {{ cmp.status }}
+              </span>
+            </td>
+
+            <td>
+              <button class="btn btn-sm btn-primary fw-semibold" data-bs-toggle="modal" data-bs-target="#updateModal{{ cmp.complaint_id }}">
+                <i class="fa-solid fa-pen-to-square me-1"></i> Process
+              </button>
+            </td>
+          </tr>
+
+          <!-- Update Modal for this complaint -->
+          <div class="modal fade" id="updateModal{{ cmp.complaint_id }}" tabindex="-1">
+            <div class="modal-dialog modal-lg">
+              <div class="modal-content">
+                <form action="{{ url_for('authority_update_complaint', complaint_id=cmp.complaint_id) }}" method="POST">
+                  <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title fw-bold">Update Complaint #{{ cmp.tracking_id }}</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                  </div>
+                  <div class="modal-body p-4">
+                    <div class="row g-3">
+                      <div class="col-md-6">
+                        <label class="form-label fw-bold">Issue Title</label>
+                        <input type="text" class="form-control" value="{{ cmp.title }}" disabled>
+                      </div>
+
+                      <div class="col-md-6">
+                        <label class="form-label fw-bold">Select New Status *</label>
+                        <select name="status" class="form-select form-select-lg" required onchange="toggleRejectionBox(this, '{{ cmp.complaint_id }}')">
+                          <option value="Submitted" {% if cmp.status == 'Submitted' %}selected{% endif %}>Submitted</option>
+                          <option value="Under Review" {% if cmp.status == 'Under Review' %}selected{% endif %}>Under Review</option>
+                          <option value="Assigned" {% if cmp.status == 'Assigned' %}selected{% endif %}>Assigned</option>
+                          <option value="In Progress" {% if cmp.status == 'In Progress' %}selected{% endif %}>In Progress</option>
+                          <option value="Resolved" {% if cmp.status == 'Resolved' %}selected{% endif %}>Resolved</option>
+                          <option value="Rejected" {% if cmp.status == 'Rejected' %}selected{% endif %}>Rejected</option>
+                        </select>
+                      </div>
+
+                      <div class="col-12">
+                        <label class="form-label fw-bold">Authority Resolution Notes</label>
+                        <textarea name="notes" rows="3" class="form-control" placeholder="Action taken by ward team, assigned vehicle/technician, repair details..."></textarea>
+                      </div>
+
+                      <div class="col-12" id="rejectionBox{{ cmp.complaint_id }}" style="display: {% if cmp.status == 'Rejected' %}block{% else %}none{% endif %};">
+                        <label class="form-label fw-bold text-danger">Rejection Explanation (Required if rejected) *</label>
+                        <textarea name="rejection_reason" rows="2" class="form-control border-danger" placeholder="Explanation for rejecting the grievance (e.g. outside municipal boundary, duplicate)..."></textarea>
+                      </div>
+
+                      <!-- History Audit Trail -->
+                      <div class="col-12 mt-4 pt-3 border-top">
+                        <h6 class="fw-bold text-muted mb-2"><i class="fa-solid fa-clock-rotate-left me-1"></i> Status Transition History</h6>
+                        <ul class="list-group list-group-flush small">
+                          {% for h in cmp.history.all() %}
+                          <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                            <div>
+                              <span class="badge bg-secondary me-1">{{ h.previous_status }} &rarr; {{ h.new_status }}</span>
+                              <span class="text-dark">{{ h.notes or 'Status transition recorded' }}</span>
+                              <small class="text-muted d-block">By: {{ h.updated_by }}</small>
+                            </div>
+                            <small class="text-muted">{{ h.updated_at.strftime('%Y-%m-%d %H:%M') }}</small>
+                          </li>
+                          {% endfor %}
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary fw-bold">Save Status & Notify Citizen</button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+          {% else %}
+          <tr>
+            <td colspan="8" class="text-center py-5 text-muted">
+              <i class="fa-solid fa-inbox fs-2 mb-2 d-block"></i>
+              No complaints match your selected search or filter criteria.
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function toggleRejectionBox(selectElem, id) {
+  const box = document.getElementById('rejectionBox' + id);
+  if (box) {
+    box.style.display = selectElem.value === 'Rejected' ? 'block' : 'none';
+  }
+}
+</script>
+{% endblock %}

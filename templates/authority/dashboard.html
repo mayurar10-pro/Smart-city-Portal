@@ -1,0 +1,198 @@
+{% extends "base.html" %}
+
+{% block title %}Authority Governance Console & Analytics – SmartCity Connect{% endblock %}
+
+{% block content %}
+<div class="py-4 text-white" style="background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%);">
+  <div class="container d-flex justify-content-between align-items-center flex-wrap gap-3">
+    <div>
+      <div class="badge bg-warning text-dark fw-bold mb-2"><i class="fa-solid fa-shield-halved me-1"></i> Authority Console Active</div>
+      <h1 class="h3 fw-bold mb-1">Municipal Governance & Analytics Dashboard</h1>
+      <p class="mb-0 text-white-50">Authorized Officer: {{ current_user.username }} &bull; Role: {{ current_user.role }}</p>
+    </div>
+    <div class="d-flex gap-2">
+      <a href="{{ url_for('authority_complaints') }}" class="btn btn-warning fw-bold">
+        <i class="fa-solid fa-list-check me-1"></i> Review Complaints
+      </a>
+      <a href="{{ url_for('authority_services') }}" class="btn btn-outline-light">
+        <i class="fa-solid fa-cubes me-1"></i> Manage Services
+      </a>
+      <a href="{{ url_for('authority_logout') }}" class="btn btn-outline-danger btn-sm text-white">
+        <i class="fa-solid fa-right-from-bracket me-1"></i> Logout
+      </a>
+    </div>
+  </div>
+</div>
+
+<div class="container py-4">
+  <!-- Analytics Counters -->
+  <div class="row g-3 mb-4 text-center">
+    <div class="col-lg-3 col-sm-6">
+      <div class="card border-0 shadow-sm p-3 h-100 border-start border-4 border-primary">
+        <div class="fs-2 fw-bold text-primary">{{ stats.total }}</div>
+        <div class="small text-muted text-uppercase fw-semibold">Total Citywide Complaints</div>
+      </div>
+    </div>
+    <div class="col-lg-3 col-sm-6">
+      <div class="card border-0 shadow-sm p-3 h-100 border-start border-4 border-success">
+        <div class="fs-2 fw-bold text-success">{{ stats.waste_count }}</div>
+        <div class="small text-muted text-uppercase fw-semibold">🗑️ Waste Complaints</div>
+      </div>
+    </div>
+    <div class="col-lg-3 col-sm-6">
+      <div class="card border-0 shadow-sm p-3 h-100 border-start border-4 border-danger">
+        <div class="fs-2 fw-bold text-danger">{{ stats.hospital_count }}</div>
+        <div class="small text-muted text-uppercase fw-semibold">🏥 Hospital Complaints</div>
+      </div>
+    </div>
+    <div class="col-lg-3 col-sm-6">
+      <div class="card border-0 shadow-sm p-3 h-100 border-start border-4 border-warning">
+        <div class="fs-2 fw-bold text-warning">{{ stats.road_count }}</div>
+        <div class="small text-muted text-uppercase fw-semibold">🛣️ Road Complaints</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Chart.js Section -->
+  <div class="row g-4 mb-4">
+    <div class="col-lg-6">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center">
+          <h6 class="fw-bold mb-0"><i class="fa-solid fa-chart-pie text-primary me-2"></i> Complaints by Service Category</h6>
+          <span class="badge bg-light text-dark border">Real-time DB Data</span>
+        </div>
+        <div class="card-body p-4 d-flex justify-content-center">
+          <div style="max-width: 380px; width: 100%;">
+            <canvas id="categoryChart"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-6">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center">
+          <h6 class="fw-bold mb-0"><i class="fa-solid fa-chart-column text-success me-2"></i> Complaints Status Pipeline</h6>
+          <span class="badge bg-light text-dark border">Redressal Flow</span>
+        </div>
+        <div class="card-body p-4">
+          <canvas id="statusChart" height="220"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Recent Complaints Queue -->
+  <div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
+      <h6 class="fw-bold mb-0"><i class="fa-solid fa-clock-rotate-left text-primary me-2"></i> Recent Citizen Submissions Queue</h6>
+      <a href="{{ url_for('authority_complaints') }}" class="btn btn-sm btn-outline-primary">
+        Open Full Complaint Management <i class="fa-solid fa-arrow-right ms-1"></i>
+      </a>
+    </div>
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>Tracking ID</th>
+            <th>Category</th>
+            <th>Title & Citizen</th>
+            <th>Location & Accuracy</th>
+            <th>Current Status</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for cmp in recent_complaints %}
+          <tr>
+            <td>
+              <span class="badge bg-light text-dark border font-monospace">{{ cmp.tracking_id }}</span>
+              <small class="text-muted d-block" style="font-size:0.72rem;">{{ cmp.created_at.strftime('%Y-%m-%d %H:%M') }}</small>
+            </td>
+            <td>
+              <span class="badge {% if cmp.category == 'Waste Management' %}badge-waste{% elif cmp.category == 'Hospital Services' %}badge-hospital{% else %}badge-road{% endif %}">
+                {{ cmp.category }}
+              </span>
+            </td>
+            <td>
+              <div class="fw-semibold text-truncate" style="max-width: 220px;">{{ cmp.title }}</div>
+              <small class="text-muted"><i class="fa-solid fa-user me-1"></i> {{ cmp.author.name }} (+91 {{ cmp.author.mobile_number }})</small>
+            </td>
+            <td>
+              <div class="small text-truncate" style="max-width: 200px;">{{ cmp.readable_address }}</div>
+              {% if cmp.location_accuracy %}
+              <span class="badge bg-info-subtle text-info-emphasis border border-info-subtle" style="font-size: 0.68rem;">
+                ±{{ cmp.location_accuracy|round|int }}m GPS
+              </span>
+              {% endif %}
+            </td>
+            <td>
+              <span class="status-badge {% if cmp.status == 'Submitted' %}status-submitted{% elif cmp.status == 'Under Review' %}status-under-review{% elif cmp.status == 'Assigned' %}status-assigned{% elif cmp.status == 'In Progress' %}status-in-progress{% elif cmp.status == 'Resolved' %}status-resolved{% else %}status-rejected{% endif %}">
+                {{ cmp.status }}
+              </span>
+            </td>
+            <td>
+              <a href="{{ url_for('authority_complaints') }}?search={{ cmp.tracking_id }}" class="btn btn-sm btn-primary">
+                Process <i class="fa-solid fa-pen-to-square ms-1"></i>
+              </a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Chart 1: Categories Doughnut Chart
+  const catCtx = document.getElementById('categoryChart').getContext('2d');
+  new Chart(catCtx, {
+    type: 'doughnut',
+    data: {
+      labels: ['Waste Management', 'Hospital Services', 'Road Management'],
+      datasets: [{
+        data: [{{ stats.waste_count }}, {{ stats.hospital_count }}, {{ stats.road_count }}],
+        backgroundColor: ['#059669', '#dc2626', '#d97706'],
+        borderWidth: 2,
+        borderColor: '#ffffff'
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { position: 'bottom' } }
+    }
+  });
+
+  // Chart 2: Status Bar Chart
+  const statCtx = document.getElementById('statusChart').getContext('2d');
+  new Chart(statCtx, {
+    type: 'bar',
+    data: {
+      labels: ['Submitted', 'Under Review', 'Assigned', 'In Progress', 'Resolved', 'Rejected'],
+      datasets: [{
+        label: 'Grievance Count',
+        data: [
+          {{ stats.status_breakdown.get('Submitted', 0) }},
+          {{ stats.status_breakdown.get('Under Review', 0) }},
+          {{ stats.status_breakdown.get('Assigned', 0) }},
+          {{ stats.status_breakdown.get('In Progress', 0) }},
+          {{ stats.status_breakdown.get('Resolved', 0) }},
+          {{ stats.status_breakdown.get('Rejected', 0) }}
+        ],
+        backgroundColor: ['#64748b', '#f59e0b', '#6366f1', '#8b5cf6', '#10b981', '#ef4444'],
+        borderRadius: 6
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { display: false } },
+      scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+    }
+  });
+});
+</script>
+{% endblock %}
