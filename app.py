@@ -256,141 +256,41 @@ def register():
 
         # Check if mobile number already exists
         existing_user = User.query.filter_by(mobile_number=mobile_number).first()
-        if existing_user and existing_user.is_verified:
+        if existing_user:
             flash('This mobile number is already registered. Please sign in.', 'info')
             return redirect(url_for('login'))
 
-        # Create or update unverified user
-        if not existing_user:
-            user = User(
-                name=name,
-                mobile_number=mobile_number,
-                email=email,
-                is_verified=False
-            )
-            user.set_password(password)
-            db.session.add(user)
-        else:
-            user = existing_user
-            user.name = name
-            user.email = email
-            user.set_password(password)
-
-        db.session.commit()
-
-        # Generate Secure 6-digit OTP
-        plain_otp = f"{random.randint(100000, 999999)}"
-        expires_at = datetime.datetime.utcnow() + datetime.timedelta(minutes=Config.OTP_EXPIRY_MINUTES)
-
-        # Invalidate old OTPs for this number
-        OTPVerification.query.filter_by(mobile_number=mobile_number, is_used=False).update({'is_used': True})
-
-        otp_rec = OTPVerification(
+        # Create user directly (OTP removed)
+        user = User(
+            name=name,
             mobile_number=mobile_number,
-            expires_at=expires_at,
-            attempts=0,
-            is_used=False
+            email=email,
+            is_verified=True
         )
-        otp_rec.set_otp(plain_otp)
-        db.session.add(otp_rec)
+        user.set_password(password)
+        db.session.add(user)
         db.session.commit()
 
-        # Send OTP
-        success, dev_code = send_sms_otp(mobile_number, plain_otp)
-        session['pending_mobile'] = mobile_number
-        if dev_code:
-            session['dev_otp'] = dev_code
+        # Log the citizen in automatically
+        login_user(user)
+        session['user_type'] = 'citizen'
 
-        flash(f'An SMS verification code has been dispatched to +91 {mobile_number}.', 'success')
-        return redirect(url_for('verify_otp'))
+        flash(f'Registration successful! Welcome to SmartCity Connect, {user.name}.', 'success')
+        return redirect(url_for('citizen_dashboard'))
 
     return render_template('register.html')
 
 @app.route('/verify-otp', methods=['GET', 'POST'])
 def verify_otp():
-    """Verify Mobile Number OTP before account activation"""
-    mobile_number = session.get('pending_mobile')
-    if not mobile_number:
-        flash('No pending registration found. Please register first.', 'warning')
-        return redirect(url_for('register'))
-
-    dev_otp = session.get('dev_otp')
-
-    if request.method == 'POST':
-        candidate_otp = request.form.get('otp', '').strip()
-        form_mobile = request.form.get('mobile_number', mobile_number).strip()
-
-        # Find latest active OTP record
-        otp_rec = OTPVerification.query.filter_by(
-            mobile_number=form_mobile, is_used=False
-        ).order_by(OTPVerification.created_at.desc()).first()
-
-        if not otp_rec:
-            flash('No active verification code found. Please request a new OTP.', 'danger')
-            return render_template('verify_otp.html', mobile_number=form_mobile, dev_otp=dev_otp)
-
-        otp_rec.attempts += 1
-        if otp_rec.attempts > 5:
-            otp_rec.is_used = True
-            db.session.commit()
-            flash('Too many incorrect attempts. Please request a new verification code.', 'danger')
-            return redirect(url_for('register'))
-
-        if otp_rec.verify_otp(candidate_otp):
-            otp_rec.is_used = True
-            
-            # Activate user
-            user = User.query.filter_by(mobile_number=form_mobile).first()
-            if user:
-                user.is_verified = True
-                db.session.commit()
-
-                # Clean up session OTP data
-                session.pop('pending_mobile', None)
-                session.pop('dev_otp', None)
-
-                # Log the citizen in automatically
-                login_user(user)
-                session['user_type'] = 'citizen'
-
-                flash('Your mobile number has been successfully verified! Welcome to SmartCity Connect.', 'success')
-                return redirect(url_for('citizen_dashboard'))
-        else:
-            db.session.commit()
-            flash('Invalid or expired verification code. Please try again.', 'danger')
-
-    return render_template('verify_otp.html', mobile_number=mobile_number, dev_otp=dev_otp)
+    """OTP verification removed - redirect to dashboard or login"""
+    if current_user.is_authenticated:
+        return redirect(url_for('citizen_dashboard'))
+    return redirect(url_for('login'))
 
 @app.route('/resend-otp', methods=['POST'])
 def resend_otp():
-    """Resend 6-Digit Verification Code"""
-    mobile_number = request.form.get('mobile_number') or session.get('pending_mobile')
-    if not mobile_number:
-        flash('Invalid session. Please register.', 'warning')
-        return redirect(url_for('register'))
-
-    plain_otp = f"{random.randint(100000, 999999)}"
-    expires_at = datetime.datetime.utcnow() + datetime.timedelta(minutes=Config.OTP_EXPIRY_MINUTES)
-
-    OTPVerification.query.filter_by(mobile_number=mobile_number, is_used=False).update({'is_used': True})
-
-    otp_rec = OTPVerification(
-        mobile_number=mobile_number,
-        expires_at=expires_at,
-        attempts=0,
-        is_used=False
-    )
-    otp_rec.set_otp(plain_otp)
-    db.session.add(otp_rec)
-    db.session.commit()
-
-    success, dev_code = send_sms_otp(mobile_number, plain_otp)
-    session['pending_mobile'] = mobile_number
-    if dev_code:
-        session['dev_otp'] = dev_code
-
-    flash(f'A fresh verification code has been dispatched to +91 {mobile_number}.', 'info')
-    return redirect(url_for('verify_otp'))
+    """OTP verification removed - redirect to login"""
+    return redirect(url_for('login'))
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -404,11 +304,6 @@ def login():
 
         user = User.query.filter_by(mobile_number=mobile_number).first()
         if user and user.check_password(password):
-            if not user.is_verified:
-                session['pending_mobile'] = mobile_number
-                flash('Your mobile number is not yet verified. Please complete OTP verification.', 'warning')
-                return redirect(url_for('verify_otp'))
-
             login_user(user)
             session['user_type'] = 'citizen'
             flash(f'Welcome back, {user.name}!', 'success')
@@ -482,6 +377,7 @@ def update_profile():
     if name:
         current_user.name = name
         current_user.email = email
+        db.session.add(current_user)
         db.session.commit()
         flash('Your profile details have been updated.', 'success')
     return redirect(url_for('citizen_dashboard'))
@@ -502,6 +398,7 @@ def change_password():
         flash('New password must be at least 6 characters.', 'danger')
     else:
         current_user.set_password(new_pass)
+        db.session.add(current_user)
         db.session.commit()
         flash('Password updated successfully.', 'success')
 
@@ -516,6 +413,7 @@ def mark_notification_read(notification_id):
     ).first()
     if notif:
         notif.is_read = True
+        db.session.add(notif)
         db.session.commit()
     return redirect(url_for('citizen_dashboard'))
 
@@ -598,7 +496,7 @@ def report_issue():
             location_accuracy=location_accuracy,
             readable_address=readable_address,
             status='Submitted',
-            created_at=datetime.datetime.utcnow()
+            created_at=datetime.datetime.now(datetime.timezone.utc)
         )
         db.session.add(complaint)
         db.session.flush()
@@ -610,7 +508,7 @@ def report_issue():
             new_status='Submitted',
             updated_by=f"Citizen ({current_user.name})",
             notes='Grievance submitted with supporting photographic and GPS evidence.',
-            updated_at=datetime.datetime.utcnow()
+            updated_at=datetime.datetime.now(datetime.timezone.utc)
         )
         db.session.add(history)
 
@@ -828,6 +726,9 @@ def authority_update_complaint(complaint_id):
     if new_status == 'Rejected' and rejection_reason:
         final_notes = f"Rejection Reason: {rejection_reason}. {notes}".strip()
 
+    # Persist the complaint status change
+    db.session.add(complaint)
+
     # Create history entry
     hist = ComplaintHistory(
         complaint_id=complaint.complaint_id,
@@ -835,7 +736,7 @@ def authority_update_complaint(complaint_id):
         new_status=new_status,
         updated_by=f"Officer {current_user.username}",
         notes=final_notes,
-        updated_at=datetime.datetime.utcnow()
+        updated_at=datetime.datetime.now(datetime.timezone.utc)
     )
     db.session.add(hist)
 

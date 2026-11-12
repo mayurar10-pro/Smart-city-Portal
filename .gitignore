@@ -3,5 +3,7 @@ __pycache__/
 *.pyo
 *.pyd
 .env
+instance/
+*.db
 uploads/*
 !uploads/.gitkeep

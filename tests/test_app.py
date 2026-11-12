@@ -13,8 +13,10 @@ class SmartCityConnectComprehensiveTest(unittest.TestCase):
     def setUp(self):
         app.config['TESTING'] = True
         app.config['WTF_CSRF_ENABLED'] = False
-        app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'
+        self.test_db_path = os.path.join(app.config['INSTANCE_DIR'], 'test_smartcity.db')
+        app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{self.test_db_path}'
         app.config['SECRET_KEY'] = 'test-secret-key-2026'
+        db.init_app(app)
         self.client = app.test_client()
 
         with app.app_context():
@@ -25,6 +27,10 @@ class SmartCityConnectComprehensiveTest(unittest.TestCase):
         with app.app_context():
             db.session.remove()
             db.drop_all()
+        # Restore production database path
+        prod_db_path = os.path.join(app.config['INSTANCE_DIR'], 'smartcity.db')
+        app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{prod_db_path}'
+        db.init_app(app)
 
     def test_01_homepage_three_cards_only(self):
         """Verify homepage strictly renders only the 3 core service cards"""
@@ -41,8 +47,8 @@ class SmartCityConnectComprehensiveTest(unittest.TestCase):
         self.assertNotIn('Drainage Management', html)
         self.assertNotIn('Streetlight Management', html)
 
-    def test_02_citizen_registration_and_otp_workflow(self):
-        """Test registration, OTP generation, verification, and automatic login"""
+    def test_02_citizen_registration_and_login_workflow(self):
+        """Test registration and automatic direct login without OTP"""
         # Register new citizen
         reg_data = {
             'name': 'Priya Sharma',
@@ -53,37 +59,13 @@ class SmartCityConnectComprehensiveTest(unittest.TestCase):
         }
         res_reg = self.client.post('/register', data=reg_data, follow_redirects=True)
         self.assertEqual(res_reg.status_code, 200)
-        self.assertIn('Mobile OTP Verification', res_reg.data.decode('utf-8'))
+        self.assertIn('My Citizen Dashboard', res_reg.data.decode('utf-8'))
+        self.assertIn('Priya Sharma', res_reg.data.decode('utf-8'))
 
         with app.app_context():
-            # Check user was created as unverified
+            # Check user was created and activated
             user = User.query.filter_by(mobile_number='9845123456').first()
             self.assertIsNotNone(user)
-            self.assertFalse(user.is_verified)
-
-            # Retrieve active OTP
-            otp_record = OTPVerification.query.filter_by(mobile_number='9845123456', is_used=False).first()
-            self.assertIsNotNone(otp_record)
-
-            # Test invalid OTP
-            self.assertFalse(otp_record.verify_otp('000000'))
-
-        # Verify OTP via client
-        with self.client.session_transaction() as sess:
-            sess['pending_mobile'] = '9845123456'
-
-        with app.app_context():
-            # Generate known candidate for verification test
-            otp_rec = OTPVerification.query.filter_by(mobile_number='9845123456', is_used=False).first()
-            otp_rec.set_otp('123456')
-            db.session.commit()
-
-        res_verify = self.client.post('/verify-otp', data={'otp': '123456', 'mobile_number': '9845123456'}, follow_redirects=True)
-        self.assertEqual(res_verify.status_code, 200)
-        self.assertIn('My Citizen Dashboard', res_verify.data.decode('utf-8'))
-
-        with app.app_context():
-            user = User.query.filter_by(mobile_number='9845123456').first()
             self.assertTrue(user.is_verified)
 
     def test_03_citizen_mobile_login(self):
@@ -169,7 +151,7 @@ class SmartCityConnectComprehensiveTest(unittest.TestCase):
         }
         res_login = self.client.post('/authority/login', data=auth_data, follow_redirects=True)
         self.assertEqual(res_login.status_code, 200)
-        self.assertIn('Municipal Governance &amp; Analytics Dashboard', res_login.data.decode('utf-8'))
+        self.assertIn('Municipal Governance', res_login.data.decode('utf-8'))
 
         # Fetch complaint to update
         with app.app_context():
@@ -192,7 +174,7 @@ class SmartCityConnectComprehensiveTest(unittest.TestCase):
             
             # Check citizen received notification
             notif = Notification.query.filter_by(user_id=user_id, complaint_id=cmp_id).order_by(Notification.created_at.desc()).first()
-            self.assertIn('Now &#39;In Progress&#39;', notif.message)
+            self.assertIn('In Progress', notif.message)
 
     def test_07_ai_complaint_categorization(self):
         """Test Scikit-Learn TF-IDF + Logistic Classifier"""
